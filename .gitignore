@@ -63,3 +63,10 @@ renv/.renv/
 
 # Packrat compatibility files (old dependency system, unused here)
 packrat/
+
+# =========================================
+# data files
+# =========================================
+# Ignore all parquet files in the data folder
+data/*.parquet
+
