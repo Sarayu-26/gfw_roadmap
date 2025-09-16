@@ -14,12 +14,11 @@ source("R/load_packages.R")
 source("R/utils_helpers.R")
 source("R/aggregate_gfw_by_cell_hpc.R")
 
-# Params (Mozambique Channel)
-# parquet_path <- "data-raw/gfw_data_by_flag_and_gear_v20250820.parquet"
-parquet_path <- Sys.getenv("PARQUET_PATH", "data-raw/gfw_data_by_flag_and_gear_v20250820.parquet")
-bbox_ll  <- c(30, -35, 65, 0)                       # WGS84 lon/lat
-bbox_rob <- c(2671900, -3743317, 5654583, -748663.4) # Robinson (m)
-out_rds  <- "data-raw/agg_cell_gear_mzc_rob.rds"
+# Params (WORLD)
+parquet_path <- Sys.getenv("PARQUET_PATH", "data/gfw_data_by_flag_and_gear_v20250820.parquet")
+bbox_ll  <- NULL
+bbox_rob <- NULL
+out_rds  <- "outputs/agg_cell_gear_mzc_rob.rds"
 
 # Threads: respect SLURM; fallback to local cores
 n_threads <- as.numeric(Sys.getenv("SLURM_CPUS_PER_TASK", unset = NA))
@@ -30,7 +29,7 @@ message(sprintf("[aggregate] Using %s threads", n_threads))
 # Run
 message("[aggregate] Starting…")
 t0 <- Sys.time()
-agg_mzc <- aggregate_gfw_by_cell(
+agg_all <- aggregate_gfw_by_cell(
   parquet_path = parquet_path,
   bbox_lonlat  = bbox_ll,
   robinson     = FALSE,
