@@ -73,5 +73,6 @@ data/*.parquet
 # Mac DS files
 **/.DS_Store
 
-
+# for sanity reasons!!! do not commit this file!
+data/iucn_marine_clean_v02.rds
 
