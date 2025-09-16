@@ -70,3 +70,8 @@ packrat/
 # Ignore all parquet files in the data folder
 data/*.parquet
 
+# Mac DS files
+**/.DS_Store
+
+
+
