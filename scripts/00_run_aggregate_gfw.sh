@@ -49,10 +49,13 @@ fi
 # --- Run R aggregation (writes per-gear TSV shards) ---
 PARQUET_PATH="$LOCAL" Rscript scripts/00_run_aggregate_gfw.R
 
-# --- Make one big TXT per gear (merge that gear's shards only) ---
+# --- Make one big TXT per gear (merge that gear's shards only; recurse into band subfolders) ---
 for d in outputs/agg_cell_*_tsv; do
   [ -d "$d" ] || continue
   g="$(basename "$d" | sed -E 's/^agg_cell_(.*)_tsv$/\1/')"
-  awk 'FNR==1 && NR!=1 {next} {print}' "$d"/*.csv > "outputs/agg_cell_${g}_full.txt"
+  # include all band subdirs
+  find "$d" -type f -name "*.csv" -print0 \
+    | xargs -0 awk 'FNR==1 && NR!=1 {next} {print}' \
+    > "outputs/agg_cell_${g}_full.txt"
   echo "[SLURM] Wrote outputs/agg_cell_${g}_full.txt"
 done
