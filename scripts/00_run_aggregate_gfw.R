@@ -10,9 +10,8 @@ source("R/load_packages.R")
 source("R/utils_helpers.R")
 source("R/aggregate_gfw_by_cell_hpc.R")
 
-# Inputs / outputs
+# Input
 parquet_path <- Sys.getenv("PARQUET_PATH", "data/gfw_data_by_flag_and_gear_v20250820.parquet")
-out_rds      <- "outputs/agg_cell_gear_mzc_rob.rds"
 
 # Threads (honor ARROW_NUM_THREADS from SLURM if set)
 n_threads <- suppressWarnings(as.integer(Sys.getenv("SLURM_CPUS_PER_TASK", unset = NA)))
@@ -36,14 +35,13 @@ message("[aggregate] Starting…")
 
 t0 <- Sys.time()
 
-# Single call — your helper does the work (single-pass, no chunking)
-agg_all <- aggregate_gfw_by_cell(
+# Call the aggregator (writes TSV shards to disk)
+out_dir <- aggregate_gfw_by_cell(
   parquet_path = parquet_path,
   bbox_lonlat  = NULL,
   robinson     = FALSE,
-  rob_bbox     = NULL,
-  save_rds     = out_rds
+  rob_bbox     = NULL
 )
 
 dt <- round(as.numeric(difftime(Sys.time(), t0, units = "mins")), 2)
-message(sprintf("[aggregate] Done in %s min → %s", dt, out_rds))
+message(sprintf("[aggregate] Done in %s min → shards at %s", dt, out_dir))
