@@ -26,8 +26,8 @@ cp -f "$SRC" "$LOCAL"
 echo "[SLURM] Using local parquet: $LOCAL"
 
 # --- Concurrency controls ---
-export GEAR_WORKERS="${SLURM_CPUS_PER_TASK}"  # number of gear workers (processes)
-export ARROW_NUM_THREADS=1                    # Arrow threads per worker (keep lean)
+export GEAR_WORKERS=1                      # run one gear at a time (was ${SLURM_CPUS_PER_TASK})
+export ARROW_NUM_THREADS=1                 # Arrow threads per worker (keep lean)
 export OMP_NUM_THREADS=1
 export MKL_NUM_THREADS=1
 export OPENBLAS_NUM_THREADS=1
