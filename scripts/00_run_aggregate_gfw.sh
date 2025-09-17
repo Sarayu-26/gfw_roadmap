@@ -34,3 +34,7 @@ export OPENBLAS_NUM_THREADS=1
 
 # --- Run ---
 PARQUET_PATH="$LOCAL" Rscript scripts/00_run_aggregate_gfw.R
+
+# --- Merge TSV shards into one full file ---
+awk 'FNR==1 && NR!=1 {next} {print}' outputs/agg_cell_gear_tsv/*.csv > outputs/agg_cell_gear_full.txt
+echo "[SLURM] Combined TSV written to outputs/agg_cell_gear_full.txt"
