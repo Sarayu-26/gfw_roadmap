@@ -20,17 +20,31 @@ echo "[SLURM] Tmp dir: ${SLURM_TMPDIR:-/tmp}"
 SRC="/home/sandbox-sparc/gfw_roadmap/data/gfw_data_by_flag_and_gear_v20250820.parquet"
 LOCAL="${SLURM_TMPDIR:-/tmp}/gfw_data_by_flag_and_gear_v20250820.parquet"
 
-# Copy parquet to local scratch (faster I/O)
+# Copy parquet to node-local scratch (faster I/O)
 mkdir -p "$(dirname "$LOCAL")"
 cp -f "$SRC" "$LOCAL"
 echo "[SLURM] Using local parquet: $LOCAL"
 
 # --- Concurrency controls ---
-export GEAR_WORKERS="${SLURM_CPUS_PER_TASK}"  # number of gear workers
-export ARROW_NUM_THREADS=1                    # keep Arrow lean per worker
+export GEAR_WORKERS="${SLURM_CPUS_PER_TASK}"  # number of gear workers (processes)
+export ARROW_NUM_THREADS=1                    # Arrow threads per worker (keep lean)
 export OMP_NUM_THREADS=1
 export MKL_NUM_THREADS=1
 export OPENBLAS_NUM_THREADS=1
+
+# --- BLAS shim: ensure libRblas.so is resolvable on this node ---
+R_HOME="$(R RHOME 2>/dev/null || true)"
+if [ -n "${R_HOME}" ] && [ -f "$R_HOME/lib/libRblas.so" ]; then
+  export LD_LIBRARY_PATH="$R_HOME/lib:${LD_LIBRARY_PATH:-}"
+  echo "[SLURM] Using R BLAS at $R_HOME/lib/libRblas.so"
+else
+  mkdir -p "$HOME/lib"
+  if   [ -f /usr/lib64/libblas.so ];   then ln -sf /usr/lib64/libblas.so   "$HOME/lib/libRblas.so"
+  elif [ -f /usr/lib64/libblas.so.3 ]; then ln -sf /usr/lib64/libblas.so.3 "$HOME/lib/libRblas.so"
+  fi
+  export LD_LIBRARY_PATH="$HOME/lib:${LD_LIBRARY_PATH:-}"
+  echo "[SLURM] Using system BLAS via \$HOME/lib/libRblas.so"
+fi
 
 # --- Run R aggregation (writes per-gear TSV shards) ---
 PARQUET_PATH="$LOCAL" Rscript scripts/00_run_aggregate_gfw.R
