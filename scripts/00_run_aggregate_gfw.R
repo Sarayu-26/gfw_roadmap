@@ -38,7 +38,7 @@ t0 <- Sys.time()
 # Call the aggregator (writes TSV shards to disk)
 out_dir <- aggregate_gfw_by_cell(
   parquet_path = parquet_path,
-  bbox_lonlat  = c(30, -35, 65, 0),
+  bbox_lonlat  = c(30, -35, 65, 0), # NULL
   robinson     = FALSE,
   rob_bbox     = NULL
 )
