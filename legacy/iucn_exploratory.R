@@ -198,18 +198,25 @@ sps <- c(
   "Monachus monachus",
   "Neomonachus schauinslandi",
   "Pusa hispida",
-  "Odobenus rosmarus"
-)
+  "Odobenus rosmarus")
+
 # length(sps)
-# 
+#==============================================================================
+# This is an example to filter what species in our roadmap list are
+#present in the iucn_v01 data frame
 ex <- iucn_v01 %>%
   dplyr::filter(binomial %in% sps)
 unique(ex$binomial)
 # 
-# sps[!sps %in% ex$binomial]
-# # length(sps[!sps %in% ex$binomial]) + length(sps)
+#find species in our list 'sps' are NOT prsent in the subset 'ex'
+sps[!sps %in% ex$binomial]
 
+#count how many species are missing and add the total number in 'sps' 
+length(sps[!sps %in% ex$binomial]) + length(sps)
 
+#==============================================================================
+# This is the code sequence to run the loop to save individual species files
+#we already did this!! Don't need to do again
 for(i in seq_along(sps)) {
   single <- iucn_v01[iucn_v01$binomial == sps[i],]
   if(nrow(single) > 0){
@@ -219,8 +226,34 @@ for(i in seq_along(sps)) {
     saveRDS(single, opath)
   }
 }
+#==============================================================================
+#Return exact species in roadmap list that are NOT present in iucn_v01
+#Opening script and loaded dplyr, read RDS file to recreate iucn_v01 &
+#copied sps vector from above
+missing <- sps[!sps %in% iucn_v01$binomial]
+missing
+length(missing)
+writeLines(missing,"data/roadmap_species_missing.txt")
+#==============================================================================
+#double checking all the species are accounted for!! 
+species_check <-data.frame(
+  species = sps, 
+  present_in_dataset = sps %in% iucn_v01$binomial
+)
 
+#reorder all present first (true) then all missing (false)
+species_check <-species_check[order(-species_check$present_in_dataset), ]
 
+#out of 193 species on our roadmap list we have 109 in IUCN dataset and 84 missing 
+#table checks out compared to previous list
 
-
-
+#i don't know triple checking comparing to roadmap missing file
+#yay it says true character (0) no species missing it matches
+roadmap_missing <- readLines("data/roadmap_species_missing.txt")
+false_species <- species_check$species[!species_check$present_in_dataset]
+identical(sort(false_species), sort(roadmap_missing))
+# In species_check but not in roadmap file
+setdiff(false_species, roadmap_missing)
+# In roadmap file but not in species_check
+setdiff(roadmap_missing, false_species)
+#==============================================================================
