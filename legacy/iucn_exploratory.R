@@ -222,7 +222,7 @@ for(i in seq_along(sps)) {
   if(nrow(single) > 0){
     # final <- single
     nsm <- unique(single$binomial)
-    opath <- paste0("outputs/", nsm, ".rds")
+    opath <- paste0("outputs/iucn_sps/", nsm, ".rds")
     saveRDS(single, opath)
   }
 }
