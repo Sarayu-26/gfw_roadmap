@@ -139,12 +139,16 @@ aggregate_gfw_by_cell <- function(
         ) %>%
         dplyr::rename(lon = lon_bin, lat = lat_bin)
       
+      # --- changed: write each band to its own subfolder to avoid append semantics ---
+      band_dir <- file.path(g_tsv_dir, sprintf("band_%s_%s", lo, hi))
+      dir.create(band_dir, recursive = TRUE, showWarnings = FALSE)
       arrow::write_dataset(
-        dataset = part,
-        path    = g_tsv_dir,
-        format  = "csv",
+        dataset  = part,
+        path     = band_dir,
+        format   = "csv",
         delimiter = "\t",
-        existing_data_behavior = "create"  # append shards across bands
+        basename_template = "part-{i}.csv",
+        existing_data_behavior = "overwrite"
       )
     }
     
