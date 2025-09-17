@@ -20,28 +20,10 @@ echo "[SLURM] Tmp dir: ${SLURM_TMPDIR:-/tmp}"
 SRC="/home/sandbox-sparc/gfw_roadmap/data/gfw_data_by_flag_and_gear_v20250820.parquet"
 LOCAL="${SLURM_TMPDIR:-/tmp}/gfw_data_by_flag_and_gear_v20250820.parquet"
 
-# --- Ensure scratch exists & has space ---
+# Copy parquet to local scratch (faster I/O)
 mkdir -p "$(dirname "$LOCAL")"
-src_size=$(du -m "$SRC" | awk '{print $1}')
-free_tmp=$(df -m "$(dirname "$LOCAL")" | awk 'NR==2{print $4}')
-echo "[SLURM] Source size: ${src_size} MB | Scratch free: ${free_tmp} MB"
-if [ "$free_tmp" -le "$src_size" ]; then
-  echo "[ERROR] Not enough scratch space to copy parquet. Exiting." >&2
-  exit 1
-fi
-
-# --- Copy parquet to local scratch (faster I/O) ---
 cp -f "$SRC" "$LOCAL"
-if [ ! -s "$LOCAL" ]; then
-  echo "[ERROR] Copy to scratch failed: $LOCAL" >&2
-  exit 1
-fi
 echo "[SLURM] Using local parquet: $LOCAL"
-du -h "$LOCAL" || true
-
-# Optional: clean up scratch on exit
-cleanup() { rm -f "$LOCAL" || true; }
-trap cleanup EXIT
 
 # --- Tame threading to reduce RAM pressure ---
 export ARROW_NUM_THREADS="${SLURM_CPUS_PER_TASK}"
