@@ -80,3 +80,7 @@ data/iucn_marine_clean_v02.rds
 # SLURM logs
 logs/
 
+
+# SLURM logs
+logs/
+
