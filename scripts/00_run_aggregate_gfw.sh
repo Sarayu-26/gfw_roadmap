@@ -2,7 +2,7 @@
 #SBATCH --job-name=agg_gfw
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=6          # adjust up/down depending on load
+#SBATCH --cpus-per-task=12         # adjust up/down depending on load
 #SBATCH --time=04:00:00
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=ibrito@eri.ucsb.edu
@@ -26,7 +26,8 @@ cp -f "$SRC" "$LOCAL"
 echo "[SLURM] Using local parquet: $LOCAL"
 
 # --- Tame threading to reduce RAM pressure ---
-export ARROW_NUM_THREADS="${SLURM_CPUS_PER_TASK}"
+# export ARROW_NUM_THREADS="${SLURM_CPUS_PER_TASK}"
+export ARROW_NUM_THREADS=2
 export OMP_NUM_THREADS=1
 export MKL_NUM_THREADS=1
 export OPENBLAS_NUM_THREADS=1

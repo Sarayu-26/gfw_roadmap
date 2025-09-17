@@ -14,12 +14,21 @@ source("R/aggregate_gfw_by_cell_hpc.R")
 parquet_path <- Sys.getenv("PARQUET_PATH", "data/gfw_data_by_flag_and_gear_v20250820.parquet")
 out_rds      <- "outputs/agg_cell_gear_mzc_rob.rds"
 
-# Threads (no chunking; keep modest to cap RAM)
+# Threads (honor ARROW_NUM_THREADS from SLURM if set)
 n_threads <- suppressWarnings(as.integer(Sys.getenv("SLURM_CPUS_PER_TASK", unset = NA)))
-if (is.na(n_threads) || n_threads <= 0) n_threads <- max(1L, parallel::detectCores(logical = FALSE))
-arrow_threads <- min(n_threads, 6L)
+if (is.na(n_threads) || n_threads <= 0) {
+  n_threads <- max(1L, parallel::detectCores(logical = FALSE))
+}
+
+arrow_threads <- suppressWarnings(as.integer(Sys.getenv("ARROW_NUM_THREADS", unset = n_threads)))
+if (is.na(arrow_threads) || arrow_threads <= 0) {
+  arrow_threads <- n_threads
+}
+
 Sys.setenv(ARROW_NUM_THREADS = arrow_threads)
-if (requireNamespace("data.table", quietly = TRUE)) data.table::setDTthreads(arrow_threads)
+if (requireNamespace("data.table", quietly = TRUE)) {
+  data.table::setDTthreads(arrow_threads)
+}
 
 message(sprintf("[aggregate] PARQUET=%s", parquet_path))
 message(sprintf("[aggregate] Using %s threads", arrow_threads))
