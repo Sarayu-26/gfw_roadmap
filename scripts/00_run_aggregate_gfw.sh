@@ -3,14 +3,15 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=6          # fewer cores = lower peak RAM
-#SBATCH --mem=64G                  # bump to 96G if still OOM
+#SBATCH --mem=48G                  # if unschedulable, try 32G
 #SBATCH --time=04:00:00
-#SBATCH --tmp=200G                 # requires cluster support; otherwise SLURM_TMPDIR may be small
+# (removed --tmp line; SLURM_TMPDIR fallback is used instead)
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=ibrito@eri.ucsb.edu
 #SBATCH --output=/home/sandbox-sparc/gfw_roadmap/logs/agg_gfw_%j.out
 #SBATCH --error=/home/sandbox-sparc/gfw_roadmap/logs/agg_gfw_%j.err
 #SBATCH --chdir=/home/sandbox-sparc/gfw_roadmap
+# #SBATCH --partition=general       # uncomment and set if required by your cluster
 
 set -euo pipefail
 
