@@ -2,7 +2,7 @@
 #SBATCH --job-name=agg_gfw
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=12         # adjust up/down depending on load
+#SBATCH --cpus-per-task=5
 #SBATCH --time=04:00:00
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=ibrito@eri.ucsb.edu
@@ -25,16 +25,20 @@ mkdir -p "$(dirname "$LOCAL")"
 cp -f "$SRC" "$LOCAL"
 echo "[SLURM] Using local parquet: $LOCAL"
 
-# --- Tame threading to reduce RAM pressure ---
-# export ARROW_NUM_THREADS="${SLURM_CPUS_PER_TASK}"
-export ARROW_NUM_THREADS=2
+# --- Concurrency controls ---
+export GEAR_WORKERS="${SLURM_CPUS_PER_TASK}"  # number of gear workers
+export ARROW_NUM_THREADS=1                    # keep Arrow lean per worker
 export OMP_NUM_THREADS=1
 export MKL_NUM_THREADS=1
 export OPENBLAS_NUM_THREADS=1
 
-# --- Run ---
+# --- Run R aggregation (writes per-gear TSV shards) ---
 PARQUET_PATH="$LOCAL" Rscript scripts/00_run_aggregate_gfw.R
 
-# --- Merge TSV shards into one full file ---
-awk 'FNR==1 && NR!=1 {next} {print}' outputs/agg_cell_gear_tsv/*.csv > outputs/agg_cell_gear_full.txt
-echo "[SLURM] Combined TSV written to outputs/agg_cell_gear_full.txt"
+# --- Make one big TXT per gear (merge that gear's shards only) ---
+for d in outputs/agg_cell_*_tsv; do
+  [ -d "$d" ] || continue
+  g="$(basename "$d" | sed -E 's/^agg_cell_(.*)_tsv$/\1/')"
+  awk 'FNR==1 && NR!=1 {next} {print}' "$d"/*.csv > "outputs/agg_cell_${g}_full.txt"
+  echo "[SLURM] Wrote outputs/agg_cell_${g}_full.txt"
+done
