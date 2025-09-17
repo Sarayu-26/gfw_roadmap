@@ -105,8 +105,8 @@ t0 <- Sys.time()
 #
 # Tip: Start with a bbox to validate the pipeline, then switch to NULL.
 # Example test region (Mozambique Channel-ish):
-bbox_lonlat <- c(30, -35, 65,  0)
-# bbox_lonlat <- NULL  # <-- set to NULL for full extent; change to a vector to test
+# bbox_lonlat <- c(30, -35, 65,  0)
+bbox_lonlat <- NULL  # <-- set to NULL for full extent; change to a vector to test
 
 # --- 8) Run the aggregator ---------------------------------------------------
 # This function will:
