@@ -257,3 +257,19 @@ setdiff(false_species, roadmap_missing)
 # In roadmap file but not in species_check
 setdiff(roadmap_missing, false_species)
 #==============================================================================
+#loading from data the meta_species.csv from habitat suitability maps Gabs/ Yulia sent
+#will add common names from AphiaID and fixed gear type
+install.packages("worrms")
+library(worrms)
+meta_species <- read.csv("data/meta_species.csv")
+meta_species <- meta_species %>%
+  mutate(CommonName = NA,
+         FixedGearType = NA)
+meta_species[meta_species == ""] <- NA
+#aphia id in worrms package would not link to common name
+#Was unable to do thi in a loop so did manually ¯\_( ◉ 3 ◉ )_/¯ 
+#now updated in data as meta_species.csv
+#NA listed in cells that had fishing gear as "other fishing" and we 
+#want to drop that 
+
+
