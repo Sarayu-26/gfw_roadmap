@@ -72,3 +72,8 @@ rs_105797[] <- ifelse(rs_105797[] > 0, 1, NA)
 rs_FF <- mask(rsFF, rs_105797)
 plot(log(rs_FF))
 map("world", add = TRUE)
+
+#===============================================================================
+#making plot for orca (practice)
+
+load("data/FINAL_EMSDM_EMMEAN_SP_137102.Rdata")
