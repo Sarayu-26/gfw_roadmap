@@ -86,3 +86,7 @@ logs/
 # SLURM logs
 logs/
 
+
+# build outputs
+outputs/**/*.rds
+outputs/**/agg_cell_*_tsv/
