@@ -3,7 +3,6 @@ library(dplyr)
 library(stringr)
 library(maps)
 
-
 # 1 step reading GFW and raster  ------------------------------------------
 
 asdf <- function(indir, 
@@ -16,7 +15,7 @@ gfw.txt <- list.files(path = "outputs",
                       all.files = TRUE,
                       full.names = TRUE, 
                       recursive = FALSE)
-gfw.txt <- gfw.txt[13:15]
+# gfw.txt <- gfw.txt[13:15]
 
 for(i in seq_along(gfw.txt)){
   df <- read.csv(gfw.txt[i], sep = "\t") %>% 
