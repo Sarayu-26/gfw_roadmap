@@ -71,12 +71,9 @@ gfw_rs <- list.files(path = "outputs/gfw_rs",
 matches <- sapply(gtt, function(g) grep(g, gfw_rs, value = TRUE))
 files_true <- unlist(matches[lengths(matches) > 0], use.names = FALSE)
 
-rs_files_true <- rast(files_true)
-
-
-asdf <- lapply(files_true, function(x) rast(x))
-asdf <- rast(asdf)
-asdf <- terra::app(asdf, fun = sum, na.rm = TRUE) # set_longlines + trawlers
+rs_files_true_FF <- lapply(files_true, function(x) rast(x))
+rs_files_true_FF <- rast(rs_files_true_FF)
+rs_files_true_FF <- terra::app(rs_files_true_FF, fun = sum, na.rm = TRUE)
 
 # 3  ----------------------------------------------------------------------
 
@@ -107,7 +104,7 @@ qtl <- as.vector(quantile(rs_105797[], na.rm = TRUE)[4])
 rs_105797[] <- ifelse(rs_105797[] >= qtl, rs_105797[], NA)
 plot(rs_105797)
 
-rs_FF <- mask(rs_files_true, rs_105797)
+rs_FF <- mask(rs_files_true_FF, rs_105797)
 plot(log(rs_FF))
 map("world", add = TRUE)
 
