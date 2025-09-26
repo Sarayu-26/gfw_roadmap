@@ -74,6 +74,10 @@ files_true <- unlist(matches[lengths(matches) > 0], use.names = FALSE)
 rs_files_true <- rast(files_true)
 
 
+asdf <- lapply(files_true, function(x) rast(x))
+asdf <- rast(asdf)
+asdf <- terra::app(asdf, fun = sum, na.rm = TRUE) # set_longlines + trawlers
+
 # 3  ----------------------------------------------------------------------
 
 read_sdm <- function(file) {
