@@ -59,7 +59,7 @@ info_csv01 <- info_csv %>%
   dplyr::filter(AphiaID == nm)
 
 gtt <- unique(info_csv01$GFWGearType)
-gtt <- unlist(stringr::str_split(gtt, ", "))
+gtt <- unlist(stringr::str_split(gtt, "_"))
 
 gfw_rs <- list.files(path = "outputs/gfw_rs", 
            pattern = ".rds", 
