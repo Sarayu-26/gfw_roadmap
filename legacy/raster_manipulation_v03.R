@@ -68,8 +68,7 @@ gfw_rs <- list.files(path = "outputs/gfw_rs",
            recursive = FALSE)
 
 
-matches <- sapply(gtt, function(g) grep(g, gfw_rs, value = TRUE))
-files_true <- unlist(matches[lengths(matches) > 0], use.names = FALSE)
+files_true <- gfw_rs[basename(gfw_rs) %in% paste0("agg_cell_", gtt, ".rds")]
 
 rs_files_true_FF <- lapply(files_true, function(x) rast(x))
 rs_files_true_FF <- rast(rs_files_true_FF)
