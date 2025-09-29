@@ -5,40 +5,40 @@ library(maps)
 
 # 1 step reading GFW and raster  ------------------------------------------
 
-asdf <- function(indir, 
-                 outdir, 
-                 res,
-                 crs = NULL)
-
-gfw.txt <- list.files(path = "outputs", 
-                      pattern = ".txt", 
-                      all.files = TRUE,
-                      full.names = TRUE, 
-                      recursive = FALSE)
-# gfw.txt <- gfw.txt[13:15]
-
-for(i in seq_along(gfw.txt)){
-  df <- read.csv(gfw.txt[i], sep = "\t") %>% 
-    as_tibble() %>% 
-    dplyr::select(-gear)  
-  pts <- vect(df, geom = c("lon", "lat"), crs = "EPSG:4326")
-  rs_blank <- rast(res = 0.5, crs = "EPSG:4326")
-  rs_agg1 <- rasterize(
-    pts, 
-    rs_blank,
-    field = "fishing_hours_sum", # variable, in this case is fihsing hours
-    fun = "sum",      # aggregation function
-    background = NA    # fill empty cells with 0
-  )
-  nms <- stringr::str_remove_all(basename(gfw.txt[i]), ".txt")
-  saveRDS(rs_agg1, paste0("outputs/gfw_rs/", nms, ".rds"))
-}
-
-rs_trollers <- readRDS("outputs/gfw_rs/agg_cell_trollers_full.rds")
-plot(log10(rs_trollers))
-
-rs_squid <- readRDS("outputs/gfw_rs/agg_cell_squid_jigger_full.rds")
-plot(log10(rs_squid))
+# asdf <- function(indir, 
+#                  outdir, 
+#                  res,
+#                  crs = NULL)
+# 
+# gfw.txt <- list.files(path = "outputs", 
+#                       pattern = ".txt", 
+#                       all.files = TRUE,
+#                       full.names = TRUE, 
+#                       recursive = FALSE)
+# # gfw.txt <- gfw.txt[13:15]
+# 
+# for(i in seq_along(gfw.txt)){
+#   df <- read.csv(gfw.txt[i], sep = "\t") %>% 
+#     as_tibble() %>% 
+#     dplyr::select(-gear)  
+#   pts <- vect(df, geom = c("lon", "lat"), crs = "EPSG:4326")
+#   rs_blank <- rast(res = 0.5, crs = "EPSG:4326")
+#   rs_agg1 <- rasterize(
+#     pts, 
+#     rs_blank,
+#     field = "fishing_hours_sum", # variable, in this case is fihsing hours
+#     fun = "sum",      # aggregation function
+#     background = NA    # fill empty cells with 0
+#   )
+#   nms <- stringr::str_remove_all(basename(gfw.txt[i]), ".txt")
+#   saveRDS(rs_agg1, paste0("outputs/gfw_rs/", nms, ".rds"))
+# }
+# 
+# rs_trollers <- readRDS("outputs/gfw_rs/agg_cell_trollers_full.rds")
+# plot(log10(rs_trollers))
+# 
+# rs_squid <- readRDS("outputs/gfw_rs/agg_cell_squid_jigger_full.rds")
+# plot(log10(rs_squid))
 
 
 # 2 -----------------------------------------------------------------------
