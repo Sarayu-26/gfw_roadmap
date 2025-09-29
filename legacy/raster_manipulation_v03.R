@@ -107,5 +107,7 @@ rs_FF <- mask(rs_files_true_FF, rs_105797)
 plot(log(rs_FF))
 map("world", add = TRUE)
 
+pdf("outputs/SP_105790.pdf", width = 30, height = 16)
 plot(log(rs_105797))
 map("world", add = TRUE)
+dev.off()
