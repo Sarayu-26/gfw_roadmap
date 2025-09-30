@@ -43,23 +43,32 @@ library(maps)
 
 # 2 -----------------------------------------------------------------------
 
+#reading meta_species in data folder and converts to tibble for easy reading
+#meta_species table needed to identify which fishing gears correspond to species
 info_csv <- read.csv("data/meta_species.csv") %>% 
   as_tibble()
 
-sdm.Rdata <- list.files(path = "data", 
-                      pattern = "*SP.*.Rdata", 
+#Each .Rdata keeps a habitat suitability map for a species
+#we only want files that represent species
+sdm.Rdata <- list.files(path = "data", #lists files in data folder
+                      pattern = "*SP.*.Rdata", #selecting for SP. and .Rdata files only
                       all.files = TRUE,
-                      full.names = TRUE, 
+                      full.names = TRUE, #returning full paths 
                       recursive = FALSE)
-
+#extracting species identifier from the from the first SDM file 
 nm <- stringr::str_remove_all(basename(sdm.Rdata[1]), ".Rdata")
-nm <- unlist(stringr::str_split(nm, "_"))[5]
+nm <- unlist(stringr::str_split(nm, "_"))[5] #isolating 5th underscore token which is the AphiaID
 
+#filter the metadata for that species using the AphiaID
+#now we have species' metadata including gear type used to catch that species
 info_csv01 <- info_csv %>% 
   dplyr::filter(AphiaID == nm)
 
+#extracting gear type from the metadata
 gtt <- unique(info_csv01$GFWGearType)
-gtt <- unlist(stringr::str_split(gtt, "_"))
+gtt <- unlist(stringr::str_split(gtt, "_")) 
+#if multiple gear types are connected with underscores, we split them into a vector
+#so it will look like "set
 
 gfw_rs <- list.files(path = "outputs/gfw_rs", 
            pattern = ".rds", 
@@ -104,10 +113,14 @@ rs_105797[] <- ifelse(rs_105797[] >= qtl, rs_105797[], NA)
 plot(rs_105797)
 
 rs_FF <- mask(rs_files_true_FF, rs_105797)
-plot(log(rs_FF))
+plot(log(rs_FF), 
+     main = "Fishing Effort of Galapagos Shark (log scale)",  # title                                   
+     legend = TRUE)   
 map("world", add = TRUE)
 
 pdf("outputs/SP_105790.pdf", width = 30, height = 16)
-plot(log(rs_105797))
+plot(log(rs_FF),
+     main = "Fishing Effort of Galapagos Shark (log scale)",
+     legend = TRUE)
 map("world", add = TRUE)
 dev.off()
