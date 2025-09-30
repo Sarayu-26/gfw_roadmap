@@ -126,9 +126,8 @@ plot(log(rs_FF),
      cex.main = 2)
 map("world", add = TRUE)
 
-mtext("Figure 1: Summed log-scale fishing hours of Galapagos Shark Carcharhinus galapagensis,masked to the upper quartile of habitat suitability.\n
-      The map highlights areas the species is most impacted by the following gears:Set longline, Trawler, Drifting longline, Pole and line fishing,\n
-      Purse seine and Set gillnet.",
-      side = 1, line = 6, cex = 1.0)
+mtext("Figure 1: Summed log-scale fishing hours of Galapagos Shark Carcharhinus galapagensis, masked to the upper quartile of habitat suitability.The map highlights \n 
+      areas the species is most impacted by the following gears:Set longline, Trawler, Drifting longline, Pole and line fishing,Purse seine and Set gillnet.",
+      side = 1, line = 4, cex = 1.1)
 
 dev.off()
