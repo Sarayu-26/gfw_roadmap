@@ -114,13 +114,21 @@ plot(rs_105797)
 
 rs_FF <- mask(rs_files_true_FF, rs_105797)
 plot(log(rs_FF), 
-     main = "Fishing Effort of Galapagos Shark (log scale)",  # title                                   
+     main = "Fishing Effort of Galapagos Shark Carcharhinus galapagensis (log scale)",  # title                                   
      legend = TRUE)   
 map("world", add = TRUE)
 
 pdf("outputs/SP_105790.pdf", width = 30, height = 16)
 plot(log(rs_FF),
-     main = "Fishing Effort of Galapagos Shark (log scale)",
-     legend = TRUE)
+     main = "Fishing Effort of Galapagos Shark (Carcharhinus galapagensis)",
+     legend = TRUE, 
+     plg = list(title = "Log Fishing Hours"),
+     cex.main = 2)
 map("world", add = TRUE)
+
+mtext("Figure 1: Summed log-scale fishing hours of Galapagos Shark Carcharhinus galapagensis,masked to the upper quartile of habitat suitability.\n
+      The map highlights areas the species is most impacted by the following gears:Set longline, Trawler, Drifting longline, Pole and line fishing,\n
+      Purse seine and Set gillnet.",
+      side = 1, line = 6, cex = 1.0)
+
 dev.off()
