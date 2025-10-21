@@ -4,7 +4,7 @@ library(stringr)
 library(maps)
 
 # 1 step reading GFW and raster  ------------------------------------------
-
+#converting GFW text files to rasters 
 # asdf <- function(indir, 
 #                  outdir, 
 #                  res,

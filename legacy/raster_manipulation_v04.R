@@ -2,9 +2,9 @@ library(terra)
 library(maps)
 
 
-#sketching what a 4 loop process can look like 
+#sketching what a for  loop process can look like 
 
-#example with about 3 species 
+#example with about 4 species 
 #species_ids <- c(105797, 105789, 105792, 105794) 
 #in order: sandbar shark, silky shark, bull shark, oceanic whitetip shark
 
