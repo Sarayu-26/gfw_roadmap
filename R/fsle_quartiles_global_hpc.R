@@ -107,6 +107,7 @@ compute_fsle_quartile_persistence <- function(fsle_dir,
     # Loop over daily layers inside this file
     for (i in seq_len(n_layers)) {
       day_r <- r[[i]]
+      day_r <- abs(day_r)  # use absolute FSLE (ignore sign)
       
       # Compute 25th and 75th percentiles for this day
       qs <- terra::quantile(day_r, probs = c(0.25, 0.75), na.rm = TRUE)
