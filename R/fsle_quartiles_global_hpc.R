@@ -233,12 +233,11 @@ compute_fsle_quartile_persistence <- function(fsle_dir,
   ))
 }
 
-## Example call (to be run inside your project, adjust paths)
-# compute_fsle_quartile_persistence(
-#   fsle_dir = "/scratch/fsle_global_daily",
-#   pattern  = "^dt_global_allsat_madt_fsle_.*\\.tif$",
-#   outdir   = "data_rout/fsle_quartiles_global",
-#   prefix   = "fsle_quartiles_1994_2022",
-#   n_cores  = 10,
-#   overwrite = TRUE
-# )
+compute_fsle_quartile_persistence(
+  fsle_dir = "data/fronts_dynamical/",
+  pattern  = "^dt_global_allsat_madt_fsle_.*\\.tif$",
+  outdir   = "data_rout/fsle_quartiles_global",
+  prefix   = "fsle_quartiles_1994_2022",
+  n_cores  = 10,
+  overwrite = TRUE
+)
