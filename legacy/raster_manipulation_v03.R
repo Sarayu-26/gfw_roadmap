@@ -209,7 +209,7 @@ plot(log(rs_FF),
      legend = TRUE)   
 map("world", add = TRUE)
 
-pdf("outputs/SP_105979.pdf", width = 30, height = 16)
+pdf("outputs/SP_105797.pdf", width = 30, height = 16)
 plot(log(rs_FF),
      main = "Fishing Effort of Sandbar Shark (Carcharhinus plumbeus)",
      legend = TRUE, 
