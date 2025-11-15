@@ -15,13 +15,7 @@ echo "[SLURM] Host: $(hostname)"
 echo "[SLURM] Cores allocated: ${SLURM_CPUS_PER_TASK}"
 echo "[SLURM] Job started at: $(date)"
 
-# --- No staging required (FSLE input files stay on /home; outputs go to /scratch) ---
-# Input dir:  /home/sandbox-sparc/AVISO_monthly_rs
-# Output dir: /scratch/sparc/
-
-# --- Run the R script --------------------------------------------------------
-# The R launcher script already sets n_cores = 10 internally.
-
-Rscript scripts/01_run_fsle_quartile_persistence.R
+# Run the R script (absolute path, since .sh lives elsewhere)
+Rscript /home/sandbox-sparc/gfw-fronts-megafauna/scripts/01_run_fsle_quartile_persistence.R
 
 echo "[SLURM] Job finished at: $(date)"
