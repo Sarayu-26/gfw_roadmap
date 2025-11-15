@@ -15,7 +15,10 @@ echo "[SLURM] Host: $(hostname)"
 echo "[SLURM] Cores allocated: ${SLURM_CPUS_PER_TASK}"
 echo "[SLURM] Job started at: $(date)"
 
-# Run the R script (absolute path, since .sh lives elsewhere)
+# --- CRITICAL: disable renv autoloader (this was causing the KernSmooth error)
+export RENV_CONFIG_AUTOLOADER_ENABLED=FALSE
+
+# Run the R script (absolute path to avoid ambiguity)
 Rscript /home/sandbox-sparc/gfw_roadmap/scripts/01_run_fsle_quartile_persistence.R
 
 echo "[SLURM] Job finished at: $(date)"
