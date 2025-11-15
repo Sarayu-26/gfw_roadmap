@@ -5,9 +5,9 @@
 #SBATCH --cpus-per-task=10
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=ibrito@eri.ucsb.edu
-#SBATCH --output=/home/sandbox-sparc/gfw-fronts-megafauna/logs/fsle_quartiles_%j.out
-#SBATCH --error=/home/sandbox-sparc/gfw-fronts-megafauna/logs/fsle_quartiles_%j.err
-#SBATCH --chdir=/home/sandbox-sparc/gfw-fronts-megafauna
+#SBATCH --output=/home/sandbox-sparc/gfw_roadmap/logs/fsle_quartiles_%j.out
+#SBATCH --error=/home/sandbox-sparc/gfw_roadmap/logs/fsle_quartiles_%j.err
+#SBATCH --chdir=/home/sandbox-sparc/gfw_roadmap
 
 set -euo pipefail
 
