@@ -4,7 +4,7 @@
 # 01_run_fsle_quartile_persistence.R
 #
 # Purpose:
-#   - Set up the runtime environment (renv, basic checks).
+#   - Set up the runtime environment (basic checks).
 #   - Source the FSLE persistence function.
 #   - Run the global FSLE quartile persistence analysis with terra + future.
 ###############################################################################
@@ -13,31 +13,38 @@ message("[fsle] Starting FSLE quartile persistence job")
 
 t0 <- Sys.time()
 
-# --- 1) Optional: renv setup -------------------------------------------------
-Sys.setenv(
-  RENV_CONFIG_AUTOSNAPSHOT       = "FALSE",
-  RENV_SETTINGS_SNAPSHOT_TYPE    = "explicit"
-)
-
-if (requireNamespace("renv", quietly = TRUE)) {
-  try(renv::activate(), silent = TRUE)
-}
+# --- 1) Optional: renv setup (DISABLED for this HPC job) --------------------
+# Sys.setenv(
+#   RENV_CONFIG_AUTOSNAPSHOT       = "FALSE",
+#   RENV_SETTINGS_SNAPSHOT_TYPE    = "explicit"
+# )
+#
+# if (requireNamespace("renv", quietly = TRUE)) {
+#   try(renv::activate(), silent = TRUE)
+# }
 
 # --- 2) Ensure parallel helper is available ---------------------------------
 if (!requireNamespace("future.apply", quietly = TRUE)) {
   stop(
     paste(
       "Package 'future.apply' is required by the FSLE persistence code.",
-      "Install it in this renv with: renv::install('future.apply')"
+      "Install it with: install.packages('future.apply')"
     )
   )
 }
 
+# Explicitly load only what we need for this job
+suppressPackageStartupMessages({
+  library(terra)
+  library(future)
+  library(future.apply)
+})
+
 # --- 3) Load project code ----------------------------------------------------
 # Keep these light and fast. Adjust as needed.
-if (file.exists("R/load_packages.R")) {
-  source("R/load_packages.R")
-}
+# if (file.exists("R/load_packages.R")) {
+#   source("R/load_packages.R")
+# }
 if (file.exists("R/utils_helpers.R")) {
   source("R/utils_helpers.R")
 }
