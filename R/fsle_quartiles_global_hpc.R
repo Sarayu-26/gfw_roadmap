@@ -109,8 +109,12 @@ compute_fsle_quartile_persistence <- function(fsle_dir,
       day_r <- r[[i]]
       day_r <- abs(day_r)  # use absolute FSLE (ignore sign)
       
-      # Compute 25th and 75th percentiles for this day
-      qs <- terra::quantile(day_r, probs = c(0.25, 0.75), na.rm = TRUE)
+      # Compute 25th and 75th percentiles for this day (across all cells)
+      vals <- terra::values(day_r, mat = FALSE)
+      if (all(is.na(vals))) {
+        next
+      }
+      qs <- stats::quantile(vals, probs = c(0.25, 0.75), na.rm = TRUE)
       qs_num <- as.numeric(qs)  # length 2: Q1, Q3
       
       # If quantiles are NA (e.g. all NA layer), skip
