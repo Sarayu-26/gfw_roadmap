@@ -16,6 +16,6 @@ echo "[SLURM] Cores allocated: ${SLURM_CPUS_PER_TASK}"
 echo "[SLURM] Job started at: $(date)"
 
 # Run the R script (absolute path, since .sh lives elsewhere)
-Rscript /home/sandbox-sparc/gfw-fronts-megafauna/scripts/01_run_fsle_quartile_persistence.R
+Rscript /home/sandbox-sparc/gfw_roadmap/scripts/01_run_fsle_quartile_persistence.R
 
 echo "[SLURM] Job finished at: $(date)"
