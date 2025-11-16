@@ -174,7 +174,7 @@ compute_fsle_quartile_persistence <- function(fsle_dir,
     stop("[FSLE] No valid layers were processed. Check your input.")
   }
   
-  total_days <- sum(vapply(valid_res, function(x) x$n_days, integer(1)))
+  total_days <- sum(vapply(valid_res, function(x) x$n_days, numeric(1)))
   message("[FSLE] Total days processed across all files: ", total_days)
   
   # Sum partial rasters for each class
