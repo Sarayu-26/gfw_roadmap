@@ -222,3 +222,95 @@ mtext("Figure 1: Summed log-scale fishing hours of Sandbar Shark (Carcharhinus p
       side = 1, line = 4, cex = 1.1)
 
 dev.off()
+#===========================================================================
+#another map for small eye stingray aphia id 1042870
+#reading meta_species in data folder and converts to tibble for easy reading
+#meta_species table needed to identify which fishing gears correspond to species
+
+info_csv <- read.csv("data/meta_species.csv") %>% 
+  as_tibble()
+
+#Each .Rdata keeps a habitat suitability map for a species
+#we only want files that represent species
+sdm.Rdata <- list.files(path = "data", #lists files in data folder
+                        pattern = "*SP.*.Rdata", #selecting for SP. and .Rdata files only
+                        all.files = TRUE,
+                        full.names = TRUE, #returning full paths 
+                        recursive = FALSE)
+#directly setting nm to aphiaID of sandbar shark
+nm<-"1042870"
+
+
+#filter the metadata for that species using the AphiaID
+#now we have species' metadata including gear type used to catch that species
+info_csv01 <- info_csv %>% 
+  dplyr::filter(AphiaID == nm)
+
+#extracting gear type from the metadata
+gtt <- unique(info_csv01$GFWGearType)
+gtt <- unlist(stringr::str_split(gtt, "_")) 
+#if multiple gear types are connected with underscores, we split them into a vector
+#so it will look like "set
+
+gfw_rs <- list.files(path = "outputs/gfw_rs", 
+                     pattern = ".rds", 
+                     all.files = TRUE, 
+                     full.names = TRUE, 
+                     recursive = FALSE)
+
+
+files_true <- gfw_rs[basename(gfw_rs) %in% paste0("agg_cell_", gtt, ".rds")]
+
+rs_files_true_FF <- lapply(files_true, function(x) rast(x))
+rs_files_true_FF <- rast(rs_files_true_FF)
+rs_files_true_FF <- terra::app(rs_files_true_FF, fun = sum, na.rm = TRUE)
+
+# 3  ----------------------------------------------------------------------
+
+read_sdm <- function(file) {
+  e <- new.env()
+  load(file, envir = e)
+  objname <- ls(e)[1]
+  obj <- e[[objname]]
+  attr(obj, "species_code") <- sub(".*SP_(\\d+)\\.Rdata$", "\\1", file)
+  obj
+}
+
+sdm_file <- sdm.Rdata[grep("SP_1042870", sdm.Rdata)]
+SP_1042870 <- read_sdm(sdm_file) %>%
+  dplyr::select(x, y, Current) %>% 
+  as_tibble()
+
+rs_1042870 <- vect(SP_1042870, geom = c("x", "y"), crs = "EPSG:4326")
+rs_blank <- rast(res = 0.5, crs = "EPSG:4326")
+rs_1042870 <- rasterize(
+  rs_1042870, 
+  rs_blank,
+  field = "Current", # variable, in this case is fihsing hours
+  fun = "sum",      # aggregation function
+  background = NA    # fill empty cells with 0
+)
+plot(rs_1042870)
+qtl <- as.vector(quantile(rs_1042870[], na.rm = TRUE)[4])
+rs_1042870[] <- ifelse(rs_1042870[] >= qtl, rs_1042870[], NA)
+plot(rs_1042870)
+
+rs_FF <- mask(rs_files_true_FF, rs_1042870)
+plot(log(rs_FF), 
+     main = "Fishing Effort of Smalleye Stingray (Megatrygon microps) (log scale)",  # title                                   
+     legend = TRUE)   
+map("world", add = TRUE)
+
+pdf("outputs/SP_1042870.pdf", width = 30, height = 16)
+plot(log(rs_FF),
+     main = "Fishing Effort of Smalleye Stingray (Megatrygon microps)",
+     legend = TRUE, 
+     plg = list(title = "Log Fishing Hours"),
+     cex.main = 2)
+map("world", add = TRUE)
+
+mtext("Figure 1: Summed log-scale fishing hours of Smalleye Stingray (Megatrygon microps), masked to the upper quartile of habitat suitability.The map highlights \n 
+      areas the species is most impacted by the following gears:trawlers, purse-seines, drifting-longlines, set-gillnets, set-longlines, fixed-gear",
+      side = 1, line = 4, cex = 1.1)
+
+dev.off()
