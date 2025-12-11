@@ -95,3 +95,4 @@ logs/
 
 # build outputs
 outputs/**/agg_cell_*_tsv/
+outputs/aquax_sdm_maps/
