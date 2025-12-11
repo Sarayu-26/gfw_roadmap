@@ -70,6 +70,12 @@ packrat/
 # Ignore all parquet files in the data folder
 data/*.parquet
 
+# Ignore  .RData files in the data/SDM folder
+data/SDM/*.RData
+
+#Ignore .rds files in data/rasters folder
+data/rasters/*.rds
+
 # Mac DS files
 **/.DS_Store
 
