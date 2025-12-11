@@ -218,7 +218,7 @@ plot(log(rs_FF),
 map("world", add = TRUE)
 
 mtext("Figure 1: Summed log-scale fishing hours of Sandbar Shark (Carcharhinus plumbeus), masked to the upper quartile of habitat suitability.The map highlights \n 
-      areas the species is most impacted by the following gears:_________.",
+      areas the species is most impacted by the following gears: drifting-longlines, pole-and-line, set-gillnets, set-longlines, trawlers",
       side = 1, line = 4, cex = 1.1)
 
 dev.off()

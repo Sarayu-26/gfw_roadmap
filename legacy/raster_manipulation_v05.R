@@ -3,11 +3,12 @@ library(dplyr)
 library(stringr)
 library(maps)
 
-#This for loop works!! It creates individual pdf maps for each species
+#This for-loop works!! It creates *individual* pdf maps for each species
 #====================================================================================
 # Set  paths
-sdm_path <- "data"  # CHANGE to Dropbox SDM folder path
-output_path <- "outputs"
+sdm_path <- "data/SDM"  # CHANGE to Dropbox SDM folder path
+output_path <- "outputs/aquax_sdm_maps"
+dir.create(output_path, showWarnings = FALSE)
 
 # Read metadata
 info_csv <- read.csv("data/meta_species.csv") %>% 
@@ -142,3 +143,33 @@ for(i in seq_along(sdm.Rdata)) {
 }
 
 cat("\nLoop complete! Check outputs folder.\n")
+#==================================================================================================
+#now troubleshooting to see which species failed. this part isn't working
+library(dplyr)
+library(stringr)
+
+# List all PDFs
+pdf_files <- list.files("outputs/aquax_sdm", pattern = "*.pdf", full.names = FALSE)
+
+# Remove SP_ prefix and .pdf extension
+pdf_ids <- pdf_files %>% str_remove("^SP_") %>% str_remove("\\.pdf$")
+
+# SDM filenames (basename only, without extension)
+sdm_files <- list.files("data/SDM", pattern = "*.Rdata", full.names = FALSE)
+sdm_ids <- sdm_files %>% str_remove("\\.Rdata$")
+
+# Now compare: check which PDFs exist for each SDM file
+failed_ids <- sdm_ids[!sdm_ids %in% paste0("SP_", pdf_ids)]
+success_ids <- sdm_ids[sdm_ids %in% paste0("SP_", pdf_ids)]
+
+cat("Number of successful species maps:", length(success_ids), "\n")
+cat("Number of failed species maps:", length(failed_ids), "\n")
+
+# Count number of PDFs in the folder
+pdf_files <- list.files("outputs/aquax_sdm_maps", pattern = "\\.pdf$", full.names = TRUE)
+num_pdfs <- length(pdf_files)
+
+cat("Number of PDF files in aquax_sdm folder:", num_pdfs, "\n")
+
+
+
