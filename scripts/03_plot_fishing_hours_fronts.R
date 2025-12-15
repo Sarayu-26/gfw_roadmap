@@ -32,6 +32,9 @@ ggplot() +
 
 #########################################################################################################################
 
+rs <- readRDS("outputs/combined_masked_sum.rds")
+front_poly <- readRDS("outputs/fsle_front_polygons/fsle_quartiles_1994_2022_Q3_pct_cut50.rds")
+land <- get_world_latlon()
 df <- as.data.frame(rs, xy = TRUE, na.rm = FALSE)
 colnames(df) <- c("x", "y", "val")
 df_sf <- st_as_sf(
