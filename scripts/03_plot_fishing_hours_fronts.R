@@ -47,6 +47,7 @@ df_sf <- st_as_sf(
 sf::sf_use_s2(FALSE)
 inside <- st_intersects(df_sf, front_poly, sparse = FALSE)[, 1]
 df_masked <- df_sf[inside, ]
+df_masked2 <- df_sf[inside == FALSE, ]
 
 log10p1 <- scales::trans_new(
   name = "log10p1",
@@ -58,7 +59,7 @@ brks <- c(0, 1, 10, 100, 1e3, 1e4, 1e5, 1e6)
 
 ggplot() +
   geom_tile(
-    data = df_masked,
+    data = df_sf,
     aes(x = x, y = y, fill = val),
     na.rm = TRUE
   ) +
