@@ -1,4 +1,5 @@
 source("R/utils_helpers.R")
+source("R/load_packages.R")
 source("R/make_front_polygon.R")
 
 
@@ -18,9 +19,9 @@ source("R/make_front_polygon.R")
 # -----------------------------------------------------------------------------
 
 params <- list(
-  rds_path  = "outputs/fsle_front_polygons/fsle_quartiles_1994_2022_Q2_pct_cut50.rds",
+  rds_path  = "outputs/fsle_front_polygons/fsle_quartiles_1994_2022_Q3_pct_cut50.rds",
   # out_pdf   = "outputs/figures/exploratory/front_global_cut50_Q3.pdf",
-  out_png   = "outputs/figures/exploratory/front_global_cut50_Q2.png",
+  out_png   = "outputs/figures/exploratory/front_global_cut50_Q3.png",
   dpi       = 600,
   width_in  = 20,
   height_in = 10
@@ -28,6 +29,7 @@ params <- list(
 
 # read front polygon (generic, not hard-coded to Q3)
 front_poly <- readRDS(params$rds_path)
+land_sf_lat <- get_world_latlon()
 
 p_front <- ggplot() +
 # ---------------------------------------------------------------------------
