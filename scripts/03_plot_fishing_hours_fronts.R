@@ -2,6 +2,7 @@ library(sf)
 library(ggplot2)
 library(scales)
 library(RColorBrewer)
+library(ggnewscale)
 
 # Robinson projection
 robin <- "+proj=robin +lon_0=0 +datum=WGS84 +units=m +no_defs"
@@ -73,24 +74,27 @@ earth_outline <- st_sfc(
 
 theme_map <- theme_void() +
   theme(
-    panel.grid.major = element_line(
-      color = "grey80",
-      linewidth = 0.3
-    ),
+    panel.grid.major = element_line(color = "grey80", linewidth = 0.3),
     panel.grid.minor = element_blank(),
     panel.border = element_blank(),
     
-    axis.text = element_text(
-      color = "grey30",
-      size = 9
-    ),
+    axis.text  = element_text(color = "grey30", size = 9),
     axis.title = element_blank(),
     
     legend.title = element_text(size = 10),
-    legend.text  = element_text(size = 9)
+    legend.text  = element_text(size = 9),
+    
+    # make sure legends are stacked
+    legend.box = "vertical",
+    
+    # THIS is the key spacing between stacked legends
+    legend.spacing.y = unit(50, "pt"),
+    
+    # optional extra breathing room around the whole legend block
+    legend.box.margin = margin(t = 0, r = 0, b = 0, l = 0)
   )
 
-# ---- Plot ----
+# ---- Plot version 1 ----
 p1 <- ggplot() +
   geom_tile(
     data = df_masked,
@@ -138,3 +142,91 @@ p1 <- ggplot() +
 print(p1)
 
 ggsave(filename = "outputs/figures/exploratory/species_fishing_fronts_v01.pdf", plot = p1, dpi = 400, width = 20, height = 10)
+
+
+
+
+##########################################################################################
+
+
+df_masked_outside <- df[!inside, ]
+p2 <- ggplot() +
+  # Outside pixels first (muted)
+  geom_tile(
+    data = df_masked_outside,
+    aes(x = x, y = y, fill = val),
+    na.rm = TRUE,
+    alpha = 0.35
+  ) +
+  scale_fill_distiller(
+    name = expression(
+      atop(
+        "Outside front hotspot areas",
+        log[10](1 + "fishing hours")
+      )
+    ),
+    palette   = "Greys",
+    trans     = log10p1,
+    breaks    = brks,
+    labels    = scales::label_number(scale_cut = scales::cut_si("")),
+    limits    = c(0, 1e6),
+    oob       = scales::squish,
+    na.value  = NA,
+    direction = 1
+  ) +
+  
+  ggnewscale::new_scale_fill() +
+  
+  # Inside pixels (your original scale)
+  geom_tile(
+    data = df_masked,
+    aes(x = x, y = y, fill = val),
+    na.rm = TRUE
+  ) +
+  scale_fill_distiller(
+    name = expression(
+      atop(
+        "Inside front hotspot areas",
+        log[10](1 + "fishing hours")
+      )
+    ),
+    palette   = "YlOrRd",
+    trans     = log10p1,
+    breaks    = brks,
+    labels    = scales::label_number(scale_cut = scales::cut_si("")),
+    limits    = c(0, 1e6),
+    oob       = scales::squish,
+    na.value  = NA,
+    direction = 1
+  ) +
+  
+  geom_sf(
+    data = front_poly_plot,
+    fill = NA,
+    color = "red",
+    linewidth = 0.3,
+    inherit.aes = FALSE
+  ) +
+  geom_sf(
+    data = land,
+    fill = "grey20",
+    color = "grey30",
+    linewidth = 0.2,
+    inherit.aes = FALSE
+  ) +
+  geom_sf(
+    data = earth_outline,
+    color = "grey50",
+    linewidth = 1.0,
+    inherit.aes = FALSE
+  ) +
+  coord_sf(
+    crs = robin,
+    default_crs = st_crs(4326),
+    expand = FALSE
+  ) +
+  theme_map
+
+# print(p2)
+ggsave(filename = "outputs/figures/exploratory/species_fishing_fronts_v02.pdf", plot = p2, dpi = 400, width = 20, height = 10)
+
