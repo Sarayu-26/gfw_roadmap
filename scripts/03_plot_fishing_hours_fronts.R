@@ -304,3 +304,108 @@ ggsave(
   filename = "outputs/figures/exploratory/species_fishing_fronts_v02.pdf",
   plot = p2, dpi = 400, width = 20, height = 10
 )
+
+
+# =============================================================================
+# 13) Figure v03: outside + inside (two fill scales), outside greys squished at 100
+# =============================================================================
+
+# Rationale:
+# Cap the OUTSIDE greyscale at 100 fishing hours to increase visual gradation
+# in low-effort regions, while still showing all outside pixels by saturating
+# values > 100 at the maximum grey tone.
+
+brks_out <- c(0, 1, 10, 100)   # breaks for the outside (grey) scale
+
+# Raster cells outside fronts
+df_masked_outside <- df[!inside, ]
+
+p3 <- ggplot() +
+  # ---------------------------------------------------------------------------
+# Outside pixels first (muted, separate scale)
+# ---------------------------------------------------------------------------
+geom_tile(
+  data = df_masked_outside,
+  aes(x = x, y = y, fill = val),
+  na.rm = TRUE,
+  alpha = 0.35
+) +
+  scale_fill_distiller(
+    name = expression(
+      atop(
+        "Outside front hotspot areas",
+        log[10](1 + "fishing hours")
+      )
+    ),
+    palette   = "Greys",
+    trans     = log10p1,
+    breaks    = brks_out,
+    labels    = scales::label_number(),
+    limits    = c(0, 100),
+    oob       = scales::squish,   # <-- this keeps all pixels, saturates >100
+    na.value  = NA,
+    direction = 1
+  ) +
+  
+  # Reset fill scale so the next tiles use an independent palette + legend
+  ggnewscale::new_scale_fill() +
+  
+  # ---------------------------------------------------------------------------
+# Inside pixels (primary signal, separate scale)
+# ---------------------------------------------------------------------------
+geom_tile(
+  data = df_masked,
+  aes(x = x, y = y, fill = val),
+  na.rm = TRUE
+) +
+  scale_fill_distiller(
+    name = expression(
+      atop(
+        "Inside front hotspot areas",
+        log[10](1 + "fishing hours")
+      )
+    ),
+    palette   = "YlOrRd",
+    trans     = log10p1,
+    breaks    = brks,
+    labels    = scales::label_number(scale_cut = scales::cut_si("")),
+    limits    = c(0, 1e6),
+    oob       = scales::censor,
+    na.value  = NA,
+    direction = 1
+  ) +
+  
+  # Front polygons
+  geom_sf(
+    data = front_poly_plot,
+    fill = NA,
+    color = "red",
+    linewidth = 0.3,
+    inherit.aes = FALSE
+  ) +
+  # Land mask
+  geom_sf(
+    data = land,
+    fill = "grey20",
+    color = "grey30",
+    linewidth = 0.2,
+    inherit.aes = FALSE
+  ) +
+  # Earth outline
+  geom_sf(
+    data = earth_outline,
+    color = "grey50",
+    linewidth = 1.0,
+    inherit.aes = FALSE
+  ) +
+  coord_sf(
+    crs = robin,
+    default_crs = st_crs(4326),
+    expand = FALSE
+  ) +
+  theme_map
+
+ggsave(
+  filename = "outputs/figures/exploratory/species_fishing_fronts_v03.pdf",
+  plot = p3, dpi = 400, width = 20, height = 10
+)
