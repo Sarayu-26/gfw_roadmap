@@ -148,6 +148,10 @@ ggsave(filename = "outputs/figures/exploratory/species_fishing_fronts_v01.pdf", 
 
 ##########################################################################################
 
+# Color scale capped at 1e6 fishing hours.
+# Values above this threshold represent <1% of grid cells (~0.77%),
+# so censoring preserves contrast in the bulk of the data
+# without materially affecting spatial patterns or comparisons.
 
 df_masked_outside <- df[!inside, ]
 p2 <- ggplot() +
@@ -170,7 +174,7 @@ p2 <- ggplot() +
     breaks    = brks,
     labels    = scales::label_number(scale_cut = scales::cut_si("")),
     limits    = c(0, 1e6),
-    oob       = scales::squish,
+    oob       = scales::censor,
     na.value  = NA,
     direction = 1
   ) +
@@ -195,7 +199,7 @@ p2 <- ggplot() +
     breaks    = brks,
     labels    = scales::label_number(scale_cut = scales::cut_si("")),
     limits    = c(0, 1e6),
-    oob       = scales::squish,
+    oob       = scales::censor,
     na.value  = NA,
     direction = 1
   ) +
