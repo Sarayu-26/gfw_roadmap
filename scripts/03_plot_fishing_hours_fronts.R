@@ -102,7 +102,12 @@ p1 <- ggplot() +
     na.rm = TRUE
   ) +
   scale_fill_distiller(
-    name      = expression(log[10](1 + "fishing hours")),
+    name = expression(
+      atop(
+        "Inside front hotspot areas",
+        log[10](1 + "fishing hours")
+      )
+    ),
     palette   = "YlOrRd",
     trans     = log10p1,
     breaks    = brks,
@@ -139,11 +144,8 @@ p1 <- ggplot() +
   ) +
   theme_map
 
-print(p1)
-
-ggsave(filename = "outputs/figures/exploratory/species_fishing_fronts_v01.pdf", plot = p1, dpi = 400, width = 20, height = 10)
-
-
+# print(p1)
+ggsave(filename = "outputs/figures/exploratory/species_fishing_fronts_v01.png", plot = p1, dpi = 400, width = 20, height = 10)
 
 
 ##########################################################################################
