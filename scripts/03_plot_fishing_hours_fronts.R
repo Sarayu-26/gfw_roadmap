@@ -1,61 +1,99 @@
-library(sf)
-library(ggplot2)
-library(scales)
-library(RColorBrewer)
-library(ggnewscale)
+# =============================================================================
+# 0) Packages
+# =============================================================================
+library(sf)            # spatial objects + geodesic operations
+library(ggplot2)       # plotting
+library(scales)        # transforms + label helpers
+library(RColorBrewer)  # Brewer palettes (used via ggplot scale_*_distiller)
+library(ggnewscale)    # multiple fill scales in one ggplot
 
-# Robinson projection
+# =============================================================================
+# 1) Projection settings
+# =============================================================================
+# Robinson projection (global maps, visually balanced)
 robin <- "+proj=robin +lon_0=0 +datum=WGS84 +units=m +no_defs"
 
-# Load data
-rs <- readRDS("outputs/combined_masked_sum.rds")
-front_poly <- readRDS("outputs/fsle_front_polygons/fsle_quartiles_1994_2022_Q3_pct_cut50.rds")
-land <- get_world_latlon()
+# =============================================================================
+# 2) Inputs (raster + polygons + land)
+# =============================================================================
+rs <- readRDS("outputs/combined_masked_sum.rds")  # raster (fishing hours or similar)
+front_poly <- readRDS("outputs/fsle_front_polygons/fsle_quartiles_1994_2022_Q3_pct_cut50.rds")  # front hotspot polygons
+land <- get_world_latlon()  # land polygons in lon/lat (WGS84)
 
-# Raster to data frame (lon/lat)
+# =============================================================================
+# 3) Raster to data frame (lon/lat grid)
+# =============================================================================
+# Convert raster to a long table with lon/lat columns for ggplot tiles
 df <- as.data.frame(rs, xy = TRUE, na.rm = FALSE)
-colnames(df) <- c("x", "y", "val")
+colnames(df) <- c("x", "y", "val")  # x = lon, y = lat, val = fishing hours
 
-# Raster points as sf (for masking only)
+# =============================================================================
+# 4) Spatial masking setup (points for point-in-polygon test)
+# =============================================================================
+# Convert raster grid cell centers to sf points for masking
 df_sf <- st_as_sf(df, coords = c("x", "y"), crs = 4326, remove = FALSE)
 
+# Use planar operations (avoid s2 loop-crossing errors for some geometries)
 sf::sf_use_s2(FALSE)
 
-# ---- Polygon for masking (NO dateline wrap) ----
+# =============================================================================
+# 5) Front polygons: version for masking (NO dateline wrapping)
+# =============================================================================
+# Make polygons valid, extract polygons only, and dissolve into one geometry
 front_poly_mask <- st_make_valid(front_poly)
 front_poly_mask <- st_collection_extract(front_poly_mask, "POLYGON")
 front_poly_mask <- st_union(front_poly_mask)
 
+# Identify grid cells inside front polygons (logical vector)
 inside <- st_intersects(df_sf, front_poly_mask, sparse = FALSE)[, 1]
+
+# Subset raster cells inside fronts
 df_masked <- df[inside, ]
 
+# =============================================================================
+# 6) Optional zonal summaries (tropics vs temperate)
+# =============================================================================
+# Note: this block assumes the pipe (%>%) is available in your session.
+# You are already using dplyr::filter explicitly, but %>% comes from dplyr/magrittr.
+
 df_trop <- df |>
-  dplyr::filter(y >= -23.5, y <= 23.5, !is.na(val))
+  dplyr::filter(y >= -23.5, y <= 23.5, !is.na(val))  # Tropics: 23.5S–23.5N
 median(df_trop$val, na.rm = TRUE)
-df_temp <- df %>% 
-  dplyr::filter((abs(y) > 23.5 & abs(y) <= 60), !is.na(val))
+
+df_temp <- df %>%
+  dplyr::filter((abs(y) > 23.5 & abs(y) <= 60), !is.na(val))  # Temperate: 23.5–60
 median(df_temp$val, na.rm = TRUE)
 
-
+# Quick check: how many raster cells fall inside polygons
 message("masked rows: ", nrow(df_masked))
 
-# ---- Polygon for plotting (WITH dateline wrap) ----
+# =============================================================================
+# 7) Front polygons: version for plotting (WITH dateline wrapping)
+# =============================================================================
+# Wrap dateline to avoid world-spanning polygon edges when projecting/plotting
 front_poly_plot <- sf::st_wrap_dateline(
   front_poly_mask,
   options = c("WRAPDATELINE=YES", "DATELINEOFFSET=180"),
   quiet = TRUE
 )
 
-# ---- log10(x + 1) transform ----
+# =============================================================================
+# 8) Scale transform and legend breaks
+# =============================================================================
+# log10(1 + x) transform for fill scale (keeps zeros valid)
 log10p1 <- scales::trans_new(
   name = "log10p1",
   transform = function(x) log10(x + 1),
   inverse   = function(x) 10^x - 1
 )
 
+# Breaks displayed in original units (before transform)
 brks <- c(0, 10, 100, 1e3, 1e4, 1e5, 1e6)
 
-# ---- Build TRUE Robinson earth contour ----
+# =============================================================================
+# 9) Build Robinson “earth outline” (true projection boundary)
+# =============================================================================
+# Construct a densified lon/lat ring around global extent, then project
 lon <- seq(-180, 180, by = 0.5)
 lat <- seq(-90, 90, by = 0.5)
 
@@ -72,6 +110,9 @@ earth_outline <- st_sfc(
 ) |>
   st_transform(robin)
 
+# =============================================================================
+# 10) Plot theme (shared)
+# =============================================================================
 theme_map <- theme_void() +
   theme(
     panel.grid.major = element_line(color = "grey80", linewidth = 0.3),
@@ -84,23 +125,27 @@ theme_map <- theme_void() +
     legend.title = element_text(size = 10),
     legend.text  = element_text(size = 9),
     
-    # make sure legends are stacked
+    # Stack multiple legends vertically (needed for ggnewscale)
     legend.box = "vertical",
     
-    # THIS is the key spacing between stacked legends
+    # Increase separation between stacked legends
     legend.spacing.y = unit(50, "pt"),
     
-    # optional extra breathing room around the whole legend block
+    # Optional padding around the legend block
     legend.box.margin = margin(t = 0, r = 0, b = 0, l = 0)
   )
 
-# ---- Plot version 1 ----
+# =============================================================================
+# 11) Figure v01: inside-front pixels only
+# =============================================================================
 p1 <- ggplot() +
+  # Raster tiles (only inside fronts)
   geom_tile(
     data = df_masked,
     aes(x = x, y = y, fill = val),
     na.rm = TRUE
   ) +
+  # Inside scale (YlOrRd)
   scale_fill_distiller(
     name = expression(
       atop(
@@ -117,6 +162,7 @@ p1 <- ggplot() +
     na.value  = NA,
     direction = 1
   ) +
+  # Front polygons
   geom_sf(
     data = front_poly_plot,
     fill = NA,
@@ -124,6 +170,7 @@ p1 <- ggplot() +
     linewidth = 0.3,
     inherit.aes = FALSE
   ) +
+  # Land mask
   geom_sf(
     data = land,
     fill = "grey20",
@@ -131,12 +178,14 @@ p1 <- ggplot() +
     linewidth = 0.2,
     inherit.aes = FALSE
   ) +
+  # Earth outline
   geom_sf(
     data = earth_outline,
     color = "grey50",
     linewidth = 1.0,
     inherit.aes = FALSE
   ) +
+  # Robinson projection; default_crs ensures lon/lat tiles are projected correctly
   coord_sf(
     crs = robin,
     default_crs = st_crs(4326),
@@ -145,25 +194,35 @@ p1 <- ggplot() +
   theme_map
 
 # print(p1)
-ggsave(filename = "outputs/figures/exploratory/species_fishing_fronts_v01.png", plot = p1, dpi = 400, width = 20, height = 10)
-
+ggsave(
+  filename = "outputs/figures/exploratory/species_fishing_fronts_v01.png",
+  plot = p1, dpi = 400, width = 20, height = 10
+)
 
 ##########################################################################################
+
+# =============================================================================
+# 12) Figure v02: outside + inside (two fill scales)
+# =============================================================================
 
 # Color scale capped at 1e6 fishing hours.
 # Values above this threshold represent <1% of grid cells (~0.77%),
 # so censoring preserves contrast in the bulk of the data
 # without materially affecting spatial patterns or comparisons.
 
+# Raster cells outside fronts
 df_masked_outside <- df[!inside, ]
+
 p2 <- ggplot() +
-  # Outside pixels first (muted)
-  geom_tile(
-    data = df_masked_outside,
-    aes(x = x, y = y, fill = val),
-    na.rm = TRUE,
-    alpha = 0.35
-  ) +
+  # ---------------------------------------------------------------------------
+# Outside pixels first (muted, separate scale)
+# ---------------------------------------------------------------------------
+geom_tile(
+  data = df_masked_outside,
+  aes(x = x, y = y, fill = val),
+  na.rm = TRUE,
+  alpha = 0.35
+) +
   scale_fill_distiller(
     name = expression(
       atop(
@@ -181,14 +240,17 @@ p2 <- ggplot() +
     direction = 1
   ) +
   
+  # Reset fill scale so the next tiles use an independent palette + legend
   ggnewscale::new_scale_fill() +
   
-  # Inside pixels (your original scale)
-  geom_tile(
-    data = df_masked,
-    aes(x = x, y = y, fill = val),
-    na.rm = TRUE
-  ) +
+  # ---------------------------------------------------------------------------
+# Inside pixels (primary signal, separate scale)
+# ---------------------------------------------------------------------------
+geom_tile(
+  data = df_masked,
+  aes(x = x, y = y, fill = val),
+  na.rm = TRUE
+) +
   scale_fill_distiller(
     name = expression(
       atop(
@@ -206,6 +268,7 @@ p2 <- ggplot() +
     direction = 1
   ) +
   
+  # Front polygons
   geom_sf(
     data = front_poly_plot,
     fill = NA,
@@ -213,6 +276,7 @@ p2 <- ggplot() +
     linewidth = 0.3,
     inherit.aes = FALSE
   ) +
+  # Land mask
   geom_sf(
     data = land,
     fill = "grey20",
@@ -220,12 +284,14 @@ p2 <- ggplot() +
     linewidth = 0.2,
     inherit.aes = FALSE
   ) +
+  # Earth outline
   geom_sf(
     data = earth_outline,
     color = "grey50",
     linewidth = 1.0,
     inherit.aes = FALSE
   ) +
+  # Robinson projection; default_crs ensures lon/lat tiles are projected correctly
   coord_sf(
     crs = robin,
     default_crs = st_crs(4326),
@@ -234,5 +300,7 @@ p2 <- ggplot() +
   theme_map
 
 # print(p2)
-ggsave(filename = "outputs/figures/exploratory/species_fishing_fronts_v02.pdf", plot = p2, dpi = 400, width = 20, height = 10)
-
+ggsave(
+  filename = "outputs/figures/exploratory/species_fishing_fronts_v02.pdf",
+  plot = p2, dpi = 400, width = 20, height = 10
+)
