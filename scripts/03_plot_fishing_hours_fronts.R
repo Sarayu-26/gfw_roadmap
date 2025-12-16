@@ -1,6 +1,7 @@
 library(sf)
 library(ggplot2)
 library(scales)
+library(RColorBrewer)
 
 # Robinson projection
 robin <- "+proj=robin +lon_0=0 +datum=WGS84 +units=m +no_defs"
@@ -26,6 +27,14 @@ front_poly_mask <- st_union(front_poly_mask)
 
 inside <- st_intersects(df_sf, front_poly_mask, sparse = FALSE)[, 1]
 df_masked <- df[inside, ]
+
+df_trop <- df |>
+  dplyr::filter(y >= -23.5, y <= 23.5, !is.na(val))
+median(df_trop$val, na.rm = TRUE)
+df_temp <- df %>% 
+  dplyr::filter((abs(y) > 23.5 & abs(y) <= 60), !is.na(val))
+median(df_temp$val, na.rm = TRUE)
+
 
 message("masked rows: ", nrow(df_masked))
 
@@ -62,19 +71,42 @@ earth_outline <- st_sfc(
 ) |>
   st_transform(robin)
 
+theme_map <- theme_void() +
+  theme(
+    panel.grid.major = element_line(
+      color = "grey80",
+      linewidth = 0.3
+    ),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    
+    axis.text = element_text(
+      color = "grey30",
+      size = 9
+    ),
+    axis.title = element_blank(),
+    
+    legend.title = element_text(size = 10),
+    legend.text  = element_text(size = 9)
+  )
+
 # ---- Plot ----
-ggplot() +
+p1 <- ggplot() +
   geom_tile(
     data = df_masked,
     aes(x = x, y = y, fill = val),
     na.rm = TRUE
   ) +
-  scale_fill_viridis_c(
-    name     = "log10 + 1 fishing hours",
-    trans    = log10p1,
-    breaks   = brks,
-    labels   = scales::label_number(scale_cut = scales::cut_si("")),
-    na.value = NA
+  scale_fill_distiller(
+    name      = expression(log[10](1 + "fishing hours")),
+    palette   = "YlOrRd",
+    trans     = log10p1,
+    breaks    = brks,
+    labels    = scales::label_number(scale_cut = scales::cut_si("")),
+    limits    = c(0, 1e6),          # adjust if you want a different cap
+    oob       = scales::squish,
+    na.value  = NA,
+    direction = 1
   ) +
   geom_sf(
     data = front_poly_plot,
@@ -101,8 +133,8 @@ ggplot() +
     default_crs = st_crs(4326),
     expand = FALSE
   ) +
-  theme_void() +
-  theme(
-    panel.grid = element_blank(),
-    panel.border = element_blank()
-  )
+  theme_map
+
+print(p1)
+
+ggsave(filename = "outputs/figures/exploratory/species_fishing_fronts_v01.pdf", plot = p1, dpi = 400, width = 20, height = 10)
