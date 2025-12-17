@@ -1,3 +1,6 @@
+source("R/load_packages.R")
+source("R/utils_helpers.R")
+
 # =============================================================================
 # 0) Packages
 # =============================================================================
@@ -56,13 +59,64 @@ df_masked <- df[inside, ]
 # Note: this block assumes the pipe (%>%) is available in your session.
 # You are already using dplyr::filter explicitly, but %>% comes from dplyr/magrittr.
 
-df_trop <- df |>
-  dplyr::filter(y >= -23.5, y <= 23.5, !is.na(val))  # Tropics: 23.5S–23.5N
-median(df_trop$val, na.rm = TRUE)
+# subsets
+df_all <- df
+df_in  <- df[inside, ]
+df_out <- df[!inside, ]
 
-df_temp <- df %>%
-  dplyr::filter((abs(y) > 23.5 & abs(y) <= 60), !is.na(val))  # Temperate: 23.5–60
-median(df_temp$val, na.rm = TRUE)
+# latitude filters
+is_trop <- function(d) d$y >= -23.5 & d$y <= 23.5
+is_temp <- function(d) abs(d$y) > 23.5 & abs(d$y) <= 60
+
+# global stats as a named vector
+gstats <- function(v) {
+  v <- v[!is.na(v)]
+  c(
+    n      = length(v),
+    mean   = if (length(v)) mean(v) else NA_real_,
+    median = if (length(v)) median(v) else NA_real_,
+    sd     = if (length(v) > 1) sd(v) else NA_real_,
+    min    = if (length(v)) min(v) else NA_real_,
+    max    = if (length(v)) max(v) else NA_real_
+  )
+}
+
+# ---- ALL pixels (df)
+g_all_all  <- gstats(df_all$val)
+g_all_trop <- gstats(df_all$val[is_trop(df_all)])
+g_all_temp <- gstats(df_all$val[is_temp(df_all)])
+
+# ---- INSIDE hotspots
+g_in_all   <- gstats(df_in$val)
+g_in_trop  <- gstats(df_in$val[is_trop(df_in)])
+g_in_temp  <- gstats(df_in$val[is_temp(df_in)])
+
+# ---- OUTSIDE hotspots
+g_out_all  <- gstats(df_out$val)
+g_out_trop <- gstats(df_out$val[is_trop(df_out)])
+g_out_temp <- gstats(df_out$val[is_temp(df_out)])
+
+# combine to table
+out <- rbind(
+  all_all           = g_all_all,
+  all_trop          = g_all_trop,
+  all_temp          = g_all_temp,
+  inside_all        = g_in_all,
+  inside_trop       = g_in_trop,
+  inside_temp       = g_in_temp,
+  outside_all       = g_out_all,
+  outside_trop      = g_out_trop,
+  outside_temp      = g_out_temp
+)
+
+out_df <- data.frame(
+  subset = rownames(out),
+  out,
+  row.names = NULL,
+  check.names = FALSE
+)
+
+write.csv(out_df, "summary_stats.csv", row.names = FALSE)
 
 # Quick check: how many raster cells fall inside polygons
 message("masked rows: ", nrow(df_masked))
