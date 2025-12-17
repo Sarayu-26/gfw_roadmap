@@ -116,7 +116,7 @@ out_df <- data.frame(
   check.names = FALSE
 )
 
-write.csv(out_df, "summary_stats.csv", row.names = FALSE)
+write.csv(out_df, "outputs/summary_stats.csv", row.names = FALSE)
 
 # Quick check: how many raster cells fall inside polygons
 message("masked rows: ", nrow(df_masked))
