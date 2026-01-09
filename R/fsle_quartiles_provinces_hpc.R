@@ -61,7 +61,10 @@ compute_fsle_quartile_persistence_by_province <- function(fsle_dir,
   message("[FSLE] Using n_cores = ", n_cores)
   old_plan <- future::plan()
   on.exit(future::plan(old_plan), add = TRUE)
-  future::plan(future::multisession, workers = n_cores)
+  
+  # CHANGE (Bellows/Linux): multicore avoids exporting terra externalptr objects
+  future::plan(future::multicore, workers = n_cores)
+  
   options(future.rng.onMisuse = "ignore")
   
   # --- Worker function: process a single file ---
