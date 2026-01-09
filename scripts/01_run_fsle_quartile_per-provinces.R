@@ -56,7 +56,7 @@ source("R/fsle_quartiles_provinces_hpc.R")
 fsle_dir <- "/home/sandbox-sparc/AVISO_monthly_rs"
 
 # Province raster aligned to FSLE grid (Longhurst IDs)
-prov_raster <- "/home/sandbox-sparc/your_project_root/outputs/boundaries/longhurst_prov_id_fslegrid.tif"
+prov_raster <- "/home/sandbox-sparc/gfw_roadmap/outputs/boundaries/longhurst_prov_id_fslegrid.tif"
 
 outdir   <- "/scratch/sparc/fsle_quartiles_global_provinces"
 
