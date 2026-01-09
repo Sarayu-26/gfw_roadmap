@@ -111,7 +111,7 @@ compute_fsle_quartile_persistence_by_province <- function(fsle_dir,
       
       # Pull values for quantiles: two columns (fsle, prov_id)
       # This is the heavy step. It is correct, but can be slow for global 4 km.
-      m <- terra::values(terra::c(day_r, prov_r), mat = TRUE)
+      m <- terra::values(c(day_r, prov_r), mat = TRUE)
       if (is.null(m) || nrow(m) == 0L) next
       
       v_fsle <- m[, 1]
