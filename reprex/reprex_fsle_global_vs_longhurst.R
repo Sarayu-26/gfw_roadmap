@@ -119,4 +119,9 @@ writeRaster(p_q3_pct, file.path(outdir, "LONGHURST_Q3_pct_2days.tif"), overwrite
 # VIZ (focus on Q3 difference)
 # -------------------------
 plot(g_q3_pct, main = "Global Q3 persistence (%) – 2 days")
+
+pdf("reprex/LONGHURST_Q3_pct_2days.pdf", width = 20, height = 10)
 plot(p_q3_pct, main = "Longhurst-relative Q3 persistence (%) – 2 days")
+dev.off()
+
+
