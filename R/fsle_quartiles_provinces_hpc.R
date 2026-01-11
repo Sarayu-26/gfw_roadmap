@@ -105,10 +105,6 @@ compute_fsle_quartile_persistence_by_province <- function(fsle_dir,
     for (i in seq_len(n_layers)) {
       day_r <- abs(r[[i]])
       
-      # valid pixels are where both FSLE and province are non-NA
-      valid_mask <- !is.na(day_r) & !is.na(prov_r)
-      den_count <- den_count + terra::ifel(valid_mask, 1L, 0L)
-      
       # Pull values for quantiles: two columns (fsle, prov_id)
       # This is the heavy step. It is correct, but can be slow for global 4 km.
       m <- terra::values(c(day_r, prov_r), mat = TRUE)
@@ -137,13 +133,17 @@ compute_fsle_quartile_persistence_by_province <- function(fsle_dir,
         q3_vec[p] <- qs[2]
       }
       
-      # Build per-pixel threshold rasters by mapping province id -> q1/q3
+      # Build per-pixel quartile cutoff rasters by mapping province id -> q1/q3
       # rcl format: 2 columns, from id to value
       rcl_q1 <- cbind(prov_ids, q1_vec)
       rcl_q3 <- cbind(prov_ids, q3_vec)
       
       q1_r <- terra::classify(prov_r, rcl = rcl_q1, others = NA, include.lowest = TRUE)
       q3_r <- terra::classify(prov_r, rcl = rcl_q3, others = NA, include.lowest = TRUE)
+      
+      # MINIMAL FIX: only count "valid days" where province-day quartile cutoffs exist
+      valid_mask <- !is.na(day_r) & !is.na(prov_r) & !is.na(q1_r) & !is.na(q3_r)
+      den_count <- den_count + terra::ifel(valid_mask, 1L, 0L)
       
       # Class masks, strictly matching your definition
       c1 <- valid_mask & (day_r <= q1_r)
