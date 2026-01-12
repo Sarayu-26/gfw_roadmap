@@ -37,6 +37,8 @@ gfw_rs <- list.files(
 
 
 # LOOP through each species
+# this should be a parallel loop
+
 for(i in seq_along(sdm_aqx)) {
   
   cat("Processing species", i, "of", length(sdm_aqx), "\n")
