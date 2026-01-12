@@ -1,21 +1,12 @@
 #!/bin/bash
-#SBATCH --job-name=gfw005
-#SBATCH --time=0
-#SBATCH --mem=8G
-#SBATCH --cpus-per-task=1
-#SBATCH --array=1-16
-#SBATCH --output=/home/sandbox-sparc/gfw_roadmap/logs/gfw_%A_%a.out
-#SBATCH --error=/home/sandbox-sparc/gfw_roadmap/logs/gfw_%A_%a.err
+#SBATCH --job-name=agg_gfw
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=5
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=ibrito@eri.ucsb.edu
+#SBATCH --output=/home/sandbox-sparc/gfw_roadmap/logs/agg_gfw_%j.out
+#SBATCH --error=/home/sandbox-sparc/gfw_roadmap/logs/agg_gfw_%j.err
+#SBATCH --chdir=/home/sandbox-sparc/gfw_roadmap
 
-# ---- Paths ----
-BASE_DIR="/home/sandbox-sparc/gfw_roadmap"
-SCRIPT="${BASE_DIR}/scripts/gfw_txt_to_rds_005_onefile.R"
-LOG_DIR="${BASE_DIR}/logs"
-
-mkdir -p "${LOG_DIR}"
-
-# ---- Move to project directory (important for relative paths in R) ----
-cd "${BASE_DIR}" || exit 1
-
-# ---- Run ----
-Rscript "${SCRIPT}" "${SLURM_ARRAY_TASK_ID}"
+Rscript /home/sandbox-sparc/gfw_roadmap/scripts/agg_gfw_txt_to_rds_005deg.R
