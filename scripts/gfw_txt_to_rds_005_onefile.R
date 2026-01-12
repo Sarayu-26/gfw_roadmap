@@ -28,7 +28,7 @@ tmpl_001 <- rast(ncols=36000, nrows=18000,
 terraOptions(progress=1, memfrac=0.8, todisk=TRUE)
 
 # Linux HPC: multicore is best here
-plan(multicore, workers = 5)
+plan(multicore, workers = 8)
 
 future_lapply(gfw_txt, function(f) {
   df <- read.table(f, header=TRUE)

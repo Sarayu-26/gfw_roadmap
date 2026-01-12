@@ -2,7 +2,7 @@
 #SBATCH --job-name=agg_gfw
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=5
+#SBATCH --cpus-per-task=8
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=ibrito@eri.ucsb.edu
 #SBATCH --output=/home/sandbox-sparc/gfw_roadmap/logs/agg_gfw_%j.out
