@@ -9,4 +9,4 @@
 #SBATCH --error=/home/sandbox-sparc/gfw_roadmap/logs/agg_gfw_%j.err
 #SBATCH --chdir=/home/sandbox-sparc/gfw_roadmap
 
-Rscript /home/sandbox-sparc/gfw_roadmap/scripts/agg_gfw_txt_to_rds_005deg.R
+Rscript /home/sandbox-sparc/gfw_roadmap/scripts/gfw_txt_to_rds_005_onefile.R
