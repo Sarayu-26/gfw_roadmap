@@ -1,6 +1,5 @@
 #!/bin/bash
 #SBATCH --job-name=gfw005
-#SBATCH --partition=long
 #SBATCH --time=0
 #SBATCH --mem=8G
 #SBATCH --cpus-per-task=1
