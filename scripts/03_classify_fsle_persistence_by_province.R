@@ -1,4 +1,5 @@
 library(terra)
+library(maps)
 
 front_freq <- rast("outputs/fsle_quartiles_global/fsle_quartiles_1994_2022_Q3_pct.tif")
 prov       <- rast("outputs/boundaries/longhurst_prov_id_fslegrid.tif")
@@ -14,7 +15,7 @@ q75 <- vapply(prov_ids, function(pid) {
   vv <- values(mask(front_freq, prov, maskvalues = pid, inverse = TRUE), mat = FALSE)
   vv <- vv[!is.na(vv)]
   if (length(vv) < 25) return(NA_real_)
-  as.numeric(quantile(vv, 0.75, na.rm = TRUE, names = FALSE))
+  as.numeric(quantile(vv, 0.75, na.rm = TRUE, names = FALSE)) # 0.51
 }, numeric(1))
 
 range(q75, na.rm = TRUE)
@@ -22,8 +23,23 @@ length(unique(round(q75, 6)))
 
 q75_r <- classify(prov, cbind(prov_ids, q75), others = NA)
 front_freq_topQ <- ifel(front_freq >= q75_r, front_freq, NA)
-plot(rotate(front_freq_topQ))
 
+plot(rotate(front_freq_topQ))
+map("world", add = TRUE)
+
+
+
+# plot(front_freq)
+# median(front_freq[], na.rm = TRUE)
+# test <- front_freq
+# test[] <- ifelse(test[] >= median(front_freq[], na.rm = TRUE), 1, 0)
+# plot(test)
+
+asdf <- quantile(front_freq_topQ[], 0.75, na.rm = TRUE)
+test <- front_freq
+test[] <- ifelse(test[] >= asdf, test[], NA)
+plot(rotate(test))
+map("world", add = TRUE)
 
 
 # THE LOOP STUFF INSTEAD OF VAPPLY
