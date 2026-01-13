@@ -51,19 +51,23 @@ suppressPackageStartupMessages({
 })
 
 # --- 4) Load project code ----------------------------------------------------
-# Main function file (this is your actual file name)
 source("R/sdm_gfw_fishing_effort.R")
 
 # --- 5) Define inputs, outputs, and cores ------------------------------------
-sdm_dir      <- file.path(proj_home, "data/aquax_sdms")
+sdm_dir      <- "/home/sandbox-sparc/z_SDMs_roadmap/SDM/"
 metadata_csv <- file.path(proj_home, "data/meta_species.csv")
 gfw_dir      <- file.path(proj_home, "data/gfw_rs")
-outdir       <- file.path(proj_home, "data/rs_FF")
+outdir       <- "/scratch/sparc/rs_FF"
 
 sdm_pattern  <- "SP.*\\.Rdata$"
 gfw_pattern  <- "\\.tif$"
 
 n_cores      <- 8
+
+# Ensure output directory exists
+if (!dir.exists(outdir)) {
+  dir.create(outdir, recursive = TRUE, showWarnings = FALSE)
+}
 
 message("[rs_FF] sdm_dir:      ", sdm_dir)
 message("[rs_FF] metadata_csv: ", metadata_csv)
@@ -96,6 +100,7 @@ message("[rs_FF] Finished SDM + GFW fishing effort in ", dt_min, " minutes.")
 message("[rs_FF] SDM files processed: ", n_files)
 message("[rs_FF] Species skipped:     ", n_skipped)
 if (n_skipped > 0) {
-  message("[rs_FF] Skipped AphiaIDs (first 25): ", paste(head(res$skipped, 25), collapse = ", "))
+  message("[rs_FF] Skipped AphiaIDs (first 25): ",
+          paste(head(res$skipped, 25), collapse = ", "))
 }
 message("[rs_FF] Outputs written under: ", outdir)
