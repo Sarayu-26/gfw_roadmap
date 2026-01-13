@@ -24,6 +24,6 @@ export OPENBLAS_NUM_THREADS=${SLURM_CPUS_PER_TASK}
 export MKL_NUM_THREADS=${SLURM_CPUS_PER_TASK}
 
 # Run the R script (absolute path to avoid ambiguity)
-Rscript /home/sandbox-sparc/gfw_roadmap/scripts/05_run_sdm_gfw_fishing_effort.R
+Rscript /home/sandbox-sparc/gfw_roadmap/scripts/05_run_aquax_sdm_fishing_effort.R
 
 echo "[SLURM] Job finished at: $(date)"
