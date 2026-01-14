@@ -102,6 +102,10 @@ outputs/aquax_sdm_maps/
 
 data/aquax_sdms
 
+data/birdlife_rs_005
+
 data/fronts_dynamical
 
 outputs/iucn_sps
+
+outputs/sdms_gfw
