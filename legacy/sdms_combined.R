@@ -13,5 +13,6 @@ rs_sdms <- lapply(list_tif, function(x) rast(x))
 rs_sdms <- rast(rs_sdms)
 rsFF <- terra::app(rs_sdms, fun = function(x) sum(!is.na(x)))
 
+# saveRDS(rsFF, "outputs/combined_masked_sum_spsN.rds")
 plot(rsFF)
 map("world", add = TRUE)
