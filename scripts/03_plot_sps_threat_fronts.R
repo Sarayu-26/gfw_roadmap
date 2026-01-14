@@ -9,6 +9,7 @@ library(ggplot2)       # plotting
 library(scales)        # transforms + label helpers
 library(RColorBrewer)  # Brewer palettes (used via ggplot scale_*_distiller)
 library(ggnewscale)    # multiple fill scales in one ggplot
+library(ragg)
 
 # =============================================================================
 # 1) Projection settings
@@ -19,7 +20,7 @@ robin <- "+proj=robin +lon_0=0 +datum=WGS84 +units=m +no_defs"
 # =============================================================================
 # 2) Inputs (raster + polygons + land)
 # =============================================================================
-rs <- readRDS("outputs/combined_masked_sum.rds")  # raster (fishing hours or similar)
+rs <- readRDS("outputs/combined_masked_sum_spsN.rds")  # raster (Species at threat (n))
 front_poly <- readRDS("outputs/fsle_front_polygons/fsle_quartiles_1994_2022_Q3_pct_cut50.rds")  # front hotspot polygons
 land <- get_world_latlon()  # land polygons in lon/lat (WGS84)
 
@@ -28,7 +29,10 @@ land <- get_world_latlon()  # land polygons in lon/lat (WGS84)
 # =============================================================================
 # Convert raster to a long table with lon/lat columns for ggplot tiles
 df <- as.data.frame(rs, xy = TRUE, na.rm = FALSE)
-colnames(df) <- c("x", "y", "val")  # x = lon, y = lat, val = fishing hours
+colnames(df) <- c("x", "y", "val")  # val = Species at threat (n)
+
+# keep only >0 (drop zeros and NAs)
+df <- df[!is.na(df$val) & df$val > 0, ]
 
 # =============================================================================
 # 4) Spatial masking setup (points for point-in-polygon test)
@@ -56,8 +60,6 @@ df_masked <- df[inside, ]
 # =============================================================================
 # 6) Optional zonal summaries (tropics vs temperate)
 # =============================================================================
-# Note: this block assumes the pipe (%>%) is available in your session.
-# You are already using dplyr::filter explicitly, but %>% comes from dplyr/magrittr.
 
 # subsets
 df_all <- df
@@ -116,7 +118,7 @@ out_df <- data.frame(
   check.names = FALSE
 )
 
-write.csv(out_df, "outputs/summary_stats.csv", row.names = FALSE)
+write.csv(out_df, "outputs/summary_stats_spsN.csv", row.names = FALSE)
 
 # Quick check: how many raster cells fall inside polygons
 message("masked rows: ", nrow(df_masked))
@@ -132,17 +134,9 @@ front_poly_plot <- sf::st_wrap_dateline(
 )
 
 # =============================================================================
-# 8) Scale transform and legend breaks
+# 8) Legend breaks (Species at threat)
 # =============================================================================
-# log10(1 + x) transform for fill scale (keeps zeros valid)
-log10p1 <- scales::trans_new(
-  name = "log10p1",
-  transform = function(x) log10(x + 1),
-  inverse   = function(x) 10^x - 1
-)
-
-# Breaks displayed in original units (before transform)
-brks <- c(0, 10, 100, 1e3, 1e4, 1e5, 1e6)
+brks <- c(1, 5, 10, 20, 30, 40, 50, 60)
 
 # =============================================================================
 # 9) Build Robinson “earth outline” (true projection boundary)
@@ -190,79 +184,8 @@ theme_map <- theme_void() +
   )
 
 # =============================================================================
-# 11) Figure v01: inside-front pixels only
-# =============================================================================
-p1 <- ggplot() +
-  # Raster tiles (only inside fronts)
-  geom_tile(
-    data = df_masked,
-    aes(x = x, y = y, fill = val),
-    na.rm = TRUE
-  ) +
-  # Inside scale (YlOrRd)
-  scale_fill_distiller(
-    name = expression(
-      atop(
-        "Inside front hotspot areas",
-        log[10](1 + "fishing hours")
-      )
-    ),
-    palette   = "YlOrRd",
-    trans     = log10p1,
-    breaks    = brks,
-    labels    = scales::label_number(scale_cut = scales::cut_si("")),
-    limits    = c(0, 1e6),          # adjust if you want a different cap
-    oob       = scales::squish,
-    na.value  = NA,
-    direction = 1
-  ) +
-  # Front polygons
-  geom_sf(
-    data = front_poly_plot,
-    fill = NA,
-    color = "red",
-    linewidth = 0.3,
-    inherit.aes = FALSE
-  ) +
-  # Land mask
-  geom_sf(
-    data = land,
-    fill = "grey20",
-    color = "grey30",
-    linewidth = 0.2,
-    inherit.aes = FALSE
-  ) +
-  # Earth outline
-  geom_sf(
-    data = earth_outline,
-    color = "grey50",
-    linewidth = 1.0,
-    inherit.aes = FALSE
-  ) +
-  # Robinson projection; default_crs ensures lon/lat tiles are projected correctly
-  coord_sf(
-    crs = robin,
-    default_crs = st_crs(4326),
-    expand = FALSE
-  ) +
-  theme_map
-
-# print(p1)
-ggsave(
-  filename = "outputs/figures/exploratory/species_fishing_fronts_v01.png",
-  plot = p1, dpi = 400, width = 20, height = 10
-)
-
-##########################################################################################
-
-# =============================================================================
 # 12) Figure v02: outside + inside (two fill scales)
 # =============================================================================
-
-# Color scale capped at 1e6 fishing hours.
-# Values above this threshold represent <1% of grid cells (~0.77%),
-# so censoring preserves contrast in the bulk of the data
-# without materially affecting spatial patterns or comparisons.
 
 # Raster cells outside fronts
 df_masked_outside <- df[!inside, ]
@@ -278,18 +201,12 @@ geom_tile(
   alpha = 0.35
 ) +
   scale_fill_distiller(
-    name = expression(
-      atop(
-        "Outside front hotspot areas",
-        log[10](1 + "fishing hours")
-      )
-    ),
+    name = "Outside front hotspot areas\nSpecies at threat (n)",
     palette   = "Greys",
-    trans     = log10p1,
     breaks    = brks,
-    labels    = scales::label_number(scale_cut = scales::cut_si("")),
-    limits    = c(0, 1e6),
-    oob       = scales::censor,
+    labels    = scales::label_number(accuracy = 1),
+    limits    = c(1, 63),
+    oob       = scales::squish,
     na.value  = NA,
     direction = 1
   ) +
@@ -306,18 +223,12 @@ geom_tile(
   na.rm = TRUE
 ) +
   scale_fill_distiller(
-    name = expression(
-      atop(
-        "Inside front hotspot areas",
-        log[10](1 + "fishing hours")
-      )
-    ),
+    name = "Inside front hotspot areas\nSpecies at threat (n)",
     palette   = "YlOrRd",
-    trans     = log10p1,
     breaks    = brks,
-    labels    = scales::label_number(scale_cut = scales::cut_si("")),
-    limits    = c(0, 1e6),
-    oob       = scales::censor,
+    labels    = scales::label_number(accuracy = 1),
+    limits    = c(1, 63),
+    oob       = scales::squish,
     na.value  = NA,
     direction = 1
   ) +
@@ -353,23 +264,33 @@ geom_tile(
   ) +
   theme_map
 
-# print(p2)
+# ggsave(
+#   filename = "outputs/figures/exploratory/species_threat_fronts_v02.pdf",
+#   plot = p2, dpi = 400, width = 20, height = 10
+# )
+
 ggsave(
-  filename = "outputs/figures/exploratory/species_fishing_fronts_v02.pdf",
-  plot = p2, dpi = 400, width = 20, height = 10
+  filename = "outputs/figures/exploratory/species_threat_fronts_v02.png",
+  plot = p2,
+  width = 14,
+  height = 7,
+  units = "in",
+  dpi = 300,
+  bg = "white",
+  device = ragg::agg_png
 )
 
 
 # =============================================================================
-# 13) Figure v03: outside + inside (two fill scales), outside greys squished at 100
+# 13) Figure v03: outside + inside (two fill scales), outside greys squished at 20
 # =============================================================================
 
 # Rationale:
-# Cap the OUTSIDE greyscale at 100 fishing hours to increase visual gradation
-# in low-effort regions, while still showing all outside pixels by saturating
-# values > 100 at the maximum grey tone.
+# Cap the OUTSIDE greyscale at 20 Species at threat (n) to increase visual gradation
+# in low-value regions, while still showing all outside pixels by saturating
+# values > 20 at the maximum grey tone.
 
-brks_out <- c(0, 1, 10, 100)   # breaks for the outside (grey) scale
+brks_out <- c(1, 5, 10, 20)   # breaks for the outside (grey) scale
 
 # Raster cells outside fronts
 df_masked_outside <- df[!inside, ]
@@ -385,18 +306,12 @@ geom_tile(
   alpha = 0.35
 ) +
   scale_fill_distiller(
-    name = expression(
-      atop(
-        "Outside front hotspot areas",
-        log[10](1 + "fishing hours")
-      )
-    ),
+    name = "Outside front hotspot areas\nSpecies at threat (n)",
     palette   = "Greys",
-    trans     = log10p1,
     breaks    = brks_out,
-    labels    = scales::label_number(),
-    limits    = c(0, 100),
-    oob       = scales::squish,   # <-- this keeps all pixels, saturates >100
+    labels    = scales::label_number(accuracy = 1),
+    limits    = c(1, 20),
+    oob       = scales::squish,   # keeps all pixels, saturates >20
     na.value  = NA,
     direction = 1
   ) +
@@ -413,18 +328,12 @@ geom_tile(
   na.rm = TRUE
 ) +
   scale_fill_distiller(
-    name = expression(
-      atop(
-        "Inside front hotspot areas",
-        log[10](1 + "fishing hours")
-      )
-    ),
+    name = "Inside front hotspot areas\nSpecies at threat (n)",
     palette   = "YlOrRd",
-    trans     = log10p1,
     breaks    = brks,
-    labels    = scales::label_number(scale_cut = scales::cut_si("")),
-    limits    = c(0, 1e6),
-    oob       = scales::censor,
+    labels    = scales::label_number(accuracy = 1),
+    limits    = c(1, 63),
+    oob       = scales::squish,
     na.value  = NA,
     direction = 1
   ) +
@@ -460,6 +369,6 @@ geom_tile(
   theme_map
 
 ggsave(
-  filename = "outputs/figures/exploratory/species_fishing_fronts_v03.pdf",
+  filename = "outputs/figures/exploratory/species_threat_fronts_v03.pdf",
   plot = p3, dpi = 400, width = 20, height = 10
 )
