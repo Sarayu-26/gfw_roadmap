@@ -1,0 +1,53 @@
+﻿Common Name,Scientific Name,ICUN Threat Assessment,GFWGearType
+Dalmatian Pelican,Pelecanus crispus,NT,set-longlines
+Snowy Albatross,Diomedea exulans,VU,drifting-longlines_pole-and-line
+Southern Royal Albatross,Diomedea epomophora,VU,drifting-longlines_trawlers
+Tristan Albatross,Diomedea dabbenena,CT,drifting-longlines_pole-and-line
+Amsterdam Albatross,Diomedea amsterdamensis,EN,drifting-longlines_pole-and-line
+Antipodean Albatross,Diomedea antipodensis,EN,drifting-longlines_tuna-purse-seines
+Northern Royal Albatross,Diomedea sanfordi,EN,drifting-longlines_trawlers
+Waved Albatross,Phoebastria irrorata,CR,set-longlines_set-gillnets
+Short-tailed Albatross,Phoebastria albatrus,VU,set-longlines
+Black-footed Albatross,Phoebastria nigripes,NT,drifting-longlines_set-longlines
+Laysan Albatross,Phoebastria immutabilis,NT,drifting-longlines_trawlers
+Black-browed Albatross,Thalassarche melanophris,LC,drifting-longlines_tuna-purse-seines_trawlers
+Campbell Albatross,Thalassarche impavida,VU,drifting-longlines_trawlers
+Shy Albatross,Thalassarche cauta,NC,drifting-longlines_trawlers
+Chatham Albatross,Thalassarche eremita,VU,drifting-longlines_set-longlines
+Salvin's Albatross,Thalassarche salvini,VU,drifting-longlines_trawlers
+Grey-headed albatross,Thalassarche chrysostoma,EN,drifting-longlines_set-longlines
+Atlantic yellow-nosed albatross,Thalassarche chlororhynchos,EN,drifting-longlines_set-longlines
+Indian yellow-nosed Albatross,Thalassarche carteri,EN,drifting-longlines_trawlers_tuna-purse-seines
+Buller's Albatross,Thalassarche bulleri,NT,drifting-longlines_trawlers_tuna-purse-seines_set-longlines
+Sooty Albatross,Phoebetria fusca,EN,drifting-longlines
+Light-mantled Albatross,Phoebetria palpebrata,NT,drifting-longlines_tuna-purse-seines
+Northern gannet,Morus bassanus,LC,set-gillnets_purse-seines_other-seines_set-longlines
+Cape gannet,Morus capensis,EN,purse-seines_other-seines
+Australasian gannet,Morus serrator,LC,set-gillnets_set-longlines
+Providence petrel,Pterodroma solandri,VU,set-longlines
+Fiji petrel,Pseudobulweria macgillivrayi,CR,set-longlines
+White-chinned petrel,Procellaria aequinoctialis,VU,drifting-longlines_trawlers
+Spectacled petrel,Procellaria conspicillata,VU,set-longlines
+Black petrel,Procellaria parkinsoni,VU,set-longlines
+Westland petrel,Procellaria westlandica,EN,trawlers
+Great shearwaters,Ardenna gravis,EN,set-gillnets_trawlers_drifting-longlines_purse-seines
+Scopoli's Shearwater,Calonectris diomedea,LC,set-longlines
+Short-tailed Shearwater,Ardenna tenuirostris,LC,set-gillnets
+Manx Shearwater,Puffinus puffinus,LC,drifting-longlines_set-gillnets
+Sooty Shearwater,Ardenna grisea,NT,drifting-longlines_trawlers_set-gillnets
+European herring gull,Larus argentatus,LC,drifting-longlines_trawlers_set-gillnets
+Audouin’s gull,Larus audouinii,VU,drifting-longlines
+Razorbill,Alca torda,LC,set-gillnets
+Atlantic Puffin,Fratercula arctica,VU,set-gillnets
+Thick-billed Murre,Uria lomvia,LC,set-gillnets
+Common Eider,Somateria mollissima,NT,set-gillnets
+Ascension Frigatebird,Fregata aquila,VU,set-longlines
+Gentoo Penguin,Pygoscelis papua,NT,trawlers
+Northern Rockhopper Penguin,Eudyptes moseleyi,EN,pots-and-traps_set-gillnets_other-purse-seines
+Fiordland Penguin,Eudyptes pachyrhynchus,VU,trawlers
+Snares Penguin,Eudyptes robustus,VU,trawlers
+Yellow-eyed Penguin,Megadyptes antipodes,EN,set-gillnets
+Little Penguin,Eudyptula minor,LC,set-gillnets
+Humboldt Penguin,Spheniscus humboldti,VU,set-gillnets
+Magellanic Penguin,Spheniscus magellanicus,LC,set-gillnets_trawlers_purse-seines
+Galapagos Penguin,Spheniscus mendiculus,EN,set-gillnets
