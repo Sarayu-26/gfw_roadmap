@@ -368,7 +368,18 @@ geom_tile(
   ) +
   theme_map
 
+# ggsave(
+#   filename = "outputs/figures/exploratory/species_threat_fronts_v03.pdf",
+#   plot = p3, dpi = 400, width = 20, height = 10
+# )
+
 ggsave(
-  filename = "outputs/figures/exploratory/species_threat_fronts_v03.pdf",
-  plot = p3, dpi = 400, width = 20, height = 10
+  filename = "outputs/figures/exploratory/species_threat_fronts_v03.png",
+  plot = p3,
+  width = 14,
+  height = 7,
+  units = "in",
+  dpi = 300,
+  bg = "white",
+  device = ragg::agg_png
 )
