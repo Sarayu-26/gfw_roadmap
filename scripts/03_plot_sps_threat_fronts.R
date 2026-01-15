@@ -416,14 +416,14 @@ geom_tile(
     direction = -1          # 1 for YlOrRd
   ) +
   
-  # Front polygons (optional)
-  geom_sf(
-    data = front_poly_plot,
-    fill = NA,
-    color = "red",
-    linewidth = 0.3,
-    inherit.aes = FALSE
-  ) +
+  # # Front polygons (optional)
+  # geom_sf(
+  #   data = front_poly_plot,
+  #   fill = NA,
+  #   color = "red",
+  #   linewidth = 0.3,
+  #   inherit.aes = FALSE
+  # ) +
   
   # Land mask
   geom_sf(
@@ -451,7 +451,7 @@ geom_tile(
   theme_map
 
 ggsave(
-  filename = "outputs/figures/exploratory/species_threat_fronts_v04_single.png",
+  filename = "outputs/figures/exploratory/species_threat_fronts_v04b_single.png",
   plot = p4,
   width = 14,
   height = 7,
