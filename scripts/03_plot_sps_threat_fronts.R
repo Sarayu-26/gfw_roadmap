@@ -214,7 +214,7 @@ geom_tile(
   # Reset fill scale so the next tiles use an independent palette + legend
   ggnewscale::new_scale_fill() +
   
-  # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 # Inside pixels (primary signal, separate scale)
 # ---------------------------------------------------------------------------
 geom_tile(
@@ -383,3 +383,86 @@ ggsave(
   bg = "white",
   device = ragg::agg_png
 )
+
+
+# =============================================================================
+# 14) Figure v04: single-layer raster (rs > 0 only), no inside vs outside
+# =============================================================================
+# Rationale:
+# - We only plot raster cells with val > 0 (all zeros/NA dropped earlier), so the
+#   map stays light and fast.
+# - One fill scale only (no ggnewscale), using a distiller palette + your breaks.
+# - Front polygons are shown as an outline for context (optional, keep/remove).
+# =============================================================================
+
+p4 <- ggplot() +
+  
+  # ---------------------------------------------------------------------------
+# Raster signal only (rs > 0): Species at threat (n)
+# ---------------------------------------------------------------------------
+geom_tile(
+  data = df,   # df already filtered to !is.na(val) & val > 0
+  aes(x = x, y = y, fill = val),
+  na.rm = TRUE
+) +
+  scale_fill_distiller(
+    name = "Species at threat (n)",
+    palette   = "RdYlBu",   # or "YlOrRd"
+    breaks    = brks,
+    labels    = scales::label_number(accuracy = 1),
+    limits    = c(1, 63),
+    oob       = scales::squish,
+    na.value  = NA,
+    direction = -1          # 1 for YlOrRd
+  ) +
+  
+  # Front polygons (optional)
+  geom_sf(
+    data = front_poly_plot,
+    fill = NA,
+    color = "red",
+    linewidth = 0.3,
+    inherit.aes = FALSE
+  ) +
+  
+  # Land mask
+  geom_sf(
+    data = land,
+    fill = "grey20",
+    color = "grey30",
+    linewidth = 0.2,
+    inherit.aes = FALSE
+  ) +
+  
+  # Earth outline
+  geom_sf(
+    data = earth_outline,
+    color = "grey50",
+    linewidth = 1.0,
+    inherit.aes = FALSE
+  ) +
+  
+  # Robinson projection; default_crs ensures lon/lat tiles are projected correctly
+  coord_sf(
+    crs = robin,
+    default_crs = st_crs(4326),
+    expand = FALSE
+  ) +
+  theme_map
+
+ggsave(
+  filename = "outputs/figures/exploratory/species_threat_fronts_v04_single.png",
+  plot = p4,
+  width = 14,
+  height = 7,
+  units = "in",
+  dpi = 300,
+  bg = "white",
+  device = ragg::agg_png
+)
+
+# Optional PDF export
+# ggsave(
+#   filename = "outputs/figures/exploratory/species_threat_fronts_v04_single.pdf",
+#   plot = p4, dpi = 400, width = 20, height = 10
+# )
