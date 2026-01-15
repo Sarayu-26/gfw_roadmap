@@ -224,13 +224,13 @@ geom_tile(
 ) +
   scale_fill_distiller(
     name = "Inside front hotspot areas\nSpecies at threat (n)",
-    palette   = "YlOrRd",
+    palette   = "RdYlBu", # YlOrRd
     breaks    = brks,
     labels    = scales::label_number(accuracy = 1),
     limits    = c(1, 63),
     oob       = scales::squish,
     na.value  = NA,
-    direction = 1
+    direction = -1 # 1 for YlOrRd
   ) +
   
   # Front polygons
@@ -270,7 +270,7 @@ geom_tile(
 # )
 
 ggsave(
-  filename = "outputs/figures/exploratory/species_threat_fronts_v02.png",
+  filename = "outputs/figures/exploratory/species_threat_fronts_v02b.png",
   plot = p2,
   width = 14,
   height = 7,
