@@ -68,7 +68,13 @@ df_out <- df[!inside, ]
 
 # latitude filters
 is_trop <- function(d) d$y >= -23.5 & d$y <= 23.5
+
+# temperate (combined)
 is_temp <- function(d) abs(d$y) > 23.5 & abs(d$y) <= 60
+
+# temperate split (north / south)
+is_temp_north <- function(d) d$y > 23.5 & d$y <= 60
+is_temp_south <- function(d) d$y < -23.5 & d$y >= -60
 
 # global stats as a named vector
 gstats <- function(v) {
@@ -84,31 +90,43 @@ gstats <- function(v) {
 }
 
 # ---- ALL pixels (df)
-g_all_all  <- gstats(df_all$val)
-g_all_trop <- gstats(df_all$val[is_trop(df_all)])
-g_all_temp <- gstats(df_all$val[is_temp(df_all)])
+g_all_all        <- gstats(df_all$val)
+g_all_trop       <- gstats(df_all$val[is_trop(df_all)])
+g_all_temp       <- gstats(df_all$val[is_temp(df_all)])
+g_all_temp_north <- gstats(df_all$val[is_temp_north(df_all)])
+g_all_temp_south <- gstats(df_all$val[is_temp_south(df_all)])
 
 # ---- INSIDE hotspots
-g_in_all   <- gstats(df_in$val)
-g_in_trop  <- gstats(df_in$val[is_trop(df_in)])
-g_in_temp  <- gstats(df_in$val[is_temp(df_in)])
+g_in_all         <- gstats(df_in$val)
+g_in_trop        <- gstats(df_in$val[is_trop(df_in)])
+g_in_temp        <- gstats(df_in$val[is_temp(df_in)])
+g_in_temp_north  <- gstats(df_in$val[is_temp_north(df_in)])
+g_in_temp_south  <- gstats(df_in$val[is_temp_south(df_in)])
 
 # ---- OUTSIDE hotspots
-g_out_all  <- gstats(df_out$val)
-g_out_trop <- gstats(df_out$val[is_trop(df_out)])
-g_out_temp <- gstats(df_out$val[is_temp(df_out)])
+g_out_all        <- gstats(df_out$val)
+g_out_trop       <- gstats(df_out$val[is_trop(df_out)])
+g_out_temp       <- gstats(df_out$val[is_temp(df_out)])
+g_out_temp_north <- gstats(df_out$val[is_temp_north(df_out)])
+g_out_temp_south <- gstats(df_out$val[is_temp_south(df_out)])
 
 # combine to table
 out <- rbind(
-  all_all           = g_all_all,
-  all_trop          = g_all_trop,
-  all_temp          = g_all_temp,
-  inside_all        = g_in_all,
-  inside_trop       = g_in_trop,
-  inside_temp       = g_in_temp,
-  outside_all       = g_out_all,
-  outside_trop      = g_out_trop,
-  outside_temp      = g_out_temp
+  all_all            = g_all_all,
+  all_trop           = g_all_trop,
+  all_temp           = g_all_temp,
+  all_temp_north     = g_all_temp_north,
+  all_temp_south     = g_all_temp_south,
+  inside_all         = g_in_all,
+  inside_trop        = g_in_trop,
+  inside_temp        = g_in_temp,
+  inside_temp_north  = g_in_temp_north,
+  inside_temp_south  = g_in_temp_south,
+  outside_all        = g_out_all,
+  outside_trop       = g_out_trop,
+  outside_temp       = g_out_temp,
+  outside_temp_north = g_out_temp_north,
+  outside_temp_south = g_out_temp_south
 )
 
 out_df <- data.frame(
