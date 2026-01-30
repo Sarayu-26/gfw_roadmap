@@ -97,7 +97,7 @@ outputs/**/agg_cell_*_tsv/
 outputs/aquax_sdm_maps/
 
 # =========================================
-# data dorectories
+# data directories
 # =========================================
 
 data/aquax_sdms
