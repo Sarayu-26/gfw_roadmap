@@ -59,7 +59,7 @@ source("R/birdlife_gfw_fishing_effort.R")
 bird_dir     <- file.path(proj_home, "data/birdlife_rs_005")
 metadata_csv <- file.path(proj_home, "data/seabird_gfw_roadmap.csv")
 gfw_dir      <- file.path(proj_home, "data/gfw_rs")
-outdir       <- "/scratch/sparc/rs_FF_birdlife"
+outdir       <- "/home/sandbox-sparc/rs_FF_birdlife"
 
 bird_pattern <- ".*_005\\.tif$"
 gfw_pattern  <- "\\.tif$"
