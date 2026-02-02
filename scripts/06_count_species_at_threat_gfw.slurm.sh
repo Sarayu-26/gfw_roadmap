@@ -4,7 +4,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=3
-#SBATCH --mem=256G
+#SBATCH --mem=128G
 #SBATCH -t 08:00:00
 #SBATCH --output=/home/sandbox-sparc/gfw_roadmap/logs/count_species_at_threat_gfw_%j.out
 #SBATCH --error=/home/sandbox-sparc/gfw_roadmap/logs/count_species_at_threat_gfw_%j.err
