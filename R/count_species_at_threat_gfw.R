@@ -30,9 +30,6 @@ count_per_pixel_across_dirs <- function(dirs,
   n_per_cell
 }
 
-proj_home <- "/home/sandbox-sparc/gfw_roadmap"
-setwd(proj_home)
-
 dirs <- c("outputs/birdlife_gfw", "outputs/sdms_gfw")
 
 out_tif <- "outputs/count_per_pixel_birdlife_plus_sdms.tif"
@@ -43,4 +40,4 @@ rs_all <- count_per_pixel_across_dirs(
   out_tif = out_tif
 )
 
-message("Done. Output written to: ", file.path(proj_home, out_tif))
+message("Done. Output written to: ", out_tif)
