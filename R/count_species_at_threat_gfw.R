@@ -36,7 +36,7 @@ out_tif <- "outputs/count_per_pixel_birdlife_plus_sdms.tif"
 
 rs_all <- count_per_pixel_across_dirs(
   dirs = dirs,
-  cores = 8,
+  cores = 3,
   out_tif = out_tif
 )
 
