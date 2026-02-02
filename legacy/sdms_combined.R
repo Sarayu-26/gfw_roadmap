@@ -36,5 +36,5 @@ rs_all <- count_per_pixel_across_dirs(
   out_tif = "outputs/count_per_pixel_birdlife_plus_sdms.tif"
 )
 
-plot(rs_all)
-map("world", add = TRUE)
+# plot(rs_all)
+# map("world", add = TRUE)
