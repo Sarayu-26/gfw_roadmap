@@ -20,7 +20,8 @@ robin <- "+proj=robin +lon_0=0 +datum=WGS84 +units=m +no_defs"
 # =============================================================================
 # 2) Inputs (raster + polygons + land)
 # =============================================================================
-rs <- readRDS("outputs/combined_masked_sum_spsN.rds")  # raster (Species at threat (n))
+# rs <- readRDS("outputs/combined_masked_sum_spsN.rds")  # raster (Species at threat (n))
+rs <- rast("outputs/count_per_pixel_birdlife_plus_sdms.tif")  # raster (Species at threat (n)) -->> AquqX models + Birdlife
 front_poly <- readRDS("outputs/fsle_front_polygons/fsle_quartiles_1994_2022_Q3_pct_cut50.rds")  # front hotspot polygons
 land <- get_world_latlon()  # land polygons in lon/lat (WGS84)
 
@@ -136,7 +137,7 @@ out_df <- data.frame(
   check.names = FALSE
 )
 
-write.csv(out_df, "outputs/summary_stats_spsN_v02.csv", row.names = FALSE)
+write.csv(out_df, "outputs/summary_stats_spsN_v03.csv", row.names = FALSE)
 
 # Quick check: how many raster cells fall inside polygons
 message("masked rows: ", nrow(df_masked))
@@ -154,7 +155,7 @@ front_poly_plot <- sf::st_wrap_dateline(
 # =============================================================================
 # 8) Legend breaks (Species at threat)
 # =============================================================================
-brks <- c(1, 5, 10, 20, 30, 40, 50, 60)
+brks <- c(1, 5, 10, 20, 30, 40, 50, 60, 70, 80)
 
 # =============================================================================
 # 9) Build Robinson “earth outline” (true projection boundary)
@@ -223,7 +224,7 @@ geom_tile(
     palette   = "Greys",
     breaks    = brks,
     labels    = scales::label_number(accuracy = 1),
-    limits    = c(1, 63),
+    limits    = c(1, 74),
     oob       = scales::squish,
     na.value  = NA,
     direction = 1
@@ -245,7 +246,7 @@ geom_tile(
     palette   = "RdYlBu", # YlOrRd
     breaks    = brks,
     labels    = scales::label_number(accuracy = 1),
-    limits    = c(1, 63),
+    limits    = c(1, 74),
     oob       = scales::squish,
     na.value  = NA,
     direction = -1 # 1 for YlOrRd
@@ -288,7 +289,7 @@ geom_tile(
 # )
 
 ggsave(
-  filename = "outputs/figures/exploratory/species_threat_fronts_v02b.png",
+  filename = "outputs/figures/exploratory/species_threat_fronts_AquaXBirdlife_v01a.png",
   plot = p2,
   width = 14,
   height = 7,
@@ -350,7 +351,7 @@ geom_tile(
     palette   = "YlOrRd",
     breaks    = brks,
     labels    = scales::label_number(accuracy = 1),
-    limits    = c(1, 63),
+    limits    = c(1, 74),
     oob       = scales::squish,
     na.value  = NA,
     direction = 1
@@ -392,7 +393,7 @@ geom_tile(
 # )
 
 ggsave(
-  filename = "outputs/figures/exploratory/species_threat_fronts_v03.png",
+  filename = "outputs/figures/exploratory/species_threat_fronts_AquaXBirdlife_v01b.png",
   plot = p3,
   width = 14,
   height = 7,
@@ -428,7 +429,7 @@ geom_tile(
     palette   = "RdYlBu",   # or "YlOrRd"
     breaks    = brks,
     labels    = scales::label_number(accuracy = 1),
-    limits    = c(1, 63),
+    limits    = c(1, 74),
     oob       = scales::squish,
     na.value  = NA,
     direction = -1          # 1 for YlOrRd
@@ -469,7 +470,7 @@ geom_tile(
   theme_map
 
 ggsave(
-  filename = "outputs/figures/exploratory/species_threat_fronts_v04b_single.png",
+  filename = "outputs/figures/exploratory/species_threat_fronts_AquaXBirdlife_v01c.png",
   plot = p4,
   width = 14,
   height = 7,
