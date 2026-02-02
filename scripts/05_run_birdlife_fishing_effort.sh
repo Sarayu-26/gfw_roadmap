@@ -1,4 +1,5 @@
 #!/bin/bash
+#SBATCH -p grit_nodes
 #SBATCH --job-name=birdlife_gfw_FF
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
@@ -8,6 +9,10 @@
 #SBATCH --output=/home/sandbox-sparc/gfw_roadmap/logs/birdlife_gfw_FF_%j.out
 #SBATCH --error=/home/sandbox-sparc/gfw_roadmap/logs/birdlife_gfw_FF_%j.err
 #SBATCH --chdir=/home/sandbox-sparc/gfw_roadmap
+
+# Optional but recommended so Slurm can backfill smarter:
+#SBATCH -t 12:00:00
+#SBATCH --mem=32G
 
 set -euo pipefail
 
@@ -23,7 +28,10 @@ export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK}
 export OPENBLAS_NUM_THREADS=${SLURM_CPUS_PER_TASK}
 export MKL_NUM_THREADS=${SLURM_CPUS_PER_TASK}
 
-# Run the BirdLife R workflow (absolute path to avoid ambiguity)
+# Make sure logs exists (won’t hurt if it already does)
+mkdir -p /home/sandbox-sparc/gfw_roadmap/logs
+
+# Run the BirdLife R workflow
 Rscript /home/sandbox-sparc/gfw_roadmap/scripts/05_run_birdlife_fishing_effort.R
 
 echo "[SLURM] Job finished at: $(date)"
