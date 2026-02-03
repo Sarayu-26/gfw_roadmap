@@ -338,7 +338,7 @@ geom_tile(
   # Reset fill scale so the next tiles use an independent palette + legend
   ggnewscale::new_scale_fill() +
   
-  # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 # Inside pixels (primary signal, separate scale)
 # ---------------------------------------------------------------------------
 geom_tile(
@@ -470,7 +470,7 @@ geom_tile(
   theme_map
 
 ggsave(
-  filename = "outputs/figures/exploratory/species_threat_fronts_AquaXBirdlife_v01c.png",
+  filename = "outputs/figures/exploratory/species_threat_fronts_AquaXBirdlife_v01c-2.png",
   plot = p4,
   width = 14,
   height = 7,
