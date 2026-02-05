@@ -26,14 +26,20 @@ front_poly <- readRDS("outputs/fsle_front_polygons/fsle_quartiles_1994_2022_Q3_p
 land <- get_world_latlon()  # land polygons in lon/lat (WGS84)
 
 # =============================================================================
+# 2b) Mask land so analyses only use ocean cells
+# =============================================================================
+land_vect <- terra::vect(land)
+rs <- terra::mask(rs, land_vect, inverse = TRUE)
+
+# =============================================================================
 # 3) Raster to data frame (lon/lat grid)
 # =============================================================================
 # Convert raster to a long table with lon/lat columns for ggplot tiles
-df <- as.data.frame(rs, xy = TRUE, na.rm = FALSE)
-colnames(df) <- c("x", "y", "val")  # val = Species at threat (n)
+df_raw <- as.data.frame(rs, xy = TRUE, na.rm = FALSE)
+colnames(df_raw) <- c("x", "y", "val")  # val = Species at threat (n)
 
-# keep only >0 (drop zeros and NAs)
-df <- df[!is.na(df$val) & df$val > 0, ]
+# keep only > 0 (drop zeros and NAs) for intensity stats
+df <- df_raw[!is.na(df_raw$val) & df_raw$val > 0, ]
 
 # =============================================================================
 # 4) Spatial masking setup (points for point-in-polygon test)
@@ -141,6 +147,131 @@ write.csv(out_df, "outputs/summary_stats_spsN_v03.csv", row.names = FALSE)
 
 # Quick check: how many raster cells fall inside polygons
 message("masked rows: ", nrow(df_masked))
+
+# =============================================================================
+# 6b) Percentage of pixels with at least one threatened species (by latitude bands)
+# =============================================================================
+
+# Reuse full df created earlier (with zeros), drop only NAs
+# df_raw should come from: df_raw <- as.data.frame(rs, xy = TRUE, na.rm = FALSE)
+df_pres <- df_raw
+valid   <- !is.na(df_pres$val)
+df_pres <- df_pres[valid, ]
+
+# Rasterize front polygons to the same grid as rs
+front_vect <- terra::vect(front_poly_mask)
+front_mask <- terra::rasterize(front_vect, rs, field = 1)  # cells with fronts = 1, others NA
+
+# Logical vector of "inside front" for every cell in the raster
+inside_pres <- !is.na(terra::values(front_mask))
+
+# Keep the same valid cells as df_pres
+inside_pres <- inside_pres[valid]
+
+# Subsets (with zeros included now)
+df_all_pres <- df_pres
+df_in_pres  <- df_pres[inside_pres, ]
+df_out_pres <- df_pres[!inside_pres, ]
+
+# Helper: presence stats for a given data frame
+presence_stats <- function(d) {
+  if (nrow(d) == 0) {
+    return(c(
+      total_cells    = 0,
+      presence_cells = 0,
+      presence_pct   = NA_real_
+    ))
+  }
+  pres <- d$val > 0
+  c(
+    total_cells    = length(pres),
+    presence_cells = sum(pres),
+    presence_pct   = if (length(pres)) mean(pres) else NA_real_
+  )
+}
+
+# Helper: apply presence_stats to a latitude band
+presence_band <- function(d, band_fun = NULL) {
+  if (!is.null(band_fun)) d <- d[band_fun(d), ]
+  presence_stats(d)
+}
+
+# ---- ALL ocean cells
+p_all_all        <- presence_band(df_all_pres, NULL)
+p_all_trop       <- presence_band(df_all_pres, is_trop)
+p_all_temp       <- presence_band(df_all_pres, is_temp)
+p_all_temp_north <- presence_band(df_all_pres, is_temp_north)
+p_all_temp_south <- presence_band(df_all_pres, is_temp_south)
+
+# ---- INSIDE fronts
+p_in_all         <- presence_band(df_in_pres, NULL)
+p_in_trop        <- presence_band(df_in_pres, is_trop)
+p_in_temp        <- presence_band(df_in_pres, is_temp)
+p_in_temp_north  <- presence_band(df_in_pres, is_temp_north)
+p_in_temp_south  <- presence_band(df_in_pres, is_temp_south)
+
+# ---- OUTSIDE fronts
+p_out_all        <- presence_band(df_out_pres, NULL)
+p_out_trop       <- presence_band(df_out_pres, is_trop)
+p_out_temp       <- presence_band(df_out_pres, is_temp)
+p_out_temp_north <- presence_band(df_out_pres, is_temp_north)
+p_out_temp_south <- presence_band(df_out_pres, is_temp_south)
+
+# Combine to table (similar structure to 'out' in section 6)
+pres_out <- rbind(
+  all_all            = p_all_all,
+  all_trop           = p_all_trop,
+  all_temp           = p_all_temp,
+  all_temp_north     = p_all_temp_north,
+  all_temp_south     = p_all_temp_south,
+  inside_all         = p_in_all,
+  inside_trop        = p_in_trop,
+  inside_temp        = p_in_temp,
+  inside_temp_north  = p_in_temp_north,
+  inside_temp_south  = p_in_temp_south,
+  outside_all        = p_out_all,
+  outside_trop       = p_out_trop,
+  outside_temp       = p_out_temp,
+  outside_temp_north = p_out_temp_north,
+  outside_temp_south = p_out_temp_south
+)
+
+presence_out_df <- data.frame(
+  subset = rownames(pres_out),
+  pres_out,
+  row.names   = NULL,
+  check.names = FALSE
+)
+
+# Build compact table with inside + outside + ratio per latitude band
+bands <- c("all", "trop", "temp", "temp_north", "temp_south")
+
+lat_band_summary <- do.call(rbind, lapply(bands, function(b) {
+  inside_row  <- presence_out_df[presence_out_df$subset == paste0("inside_",  b), ]
+  outside_row <- presence_out_df[presence_out_df$subset == paste0("outside_", b), ]
+  
+  data.frame(
+    band                   = b,
+    inside_total_cells     = inside_row$total_cells,
+    inside_presence_cells  = inside_row$presence_cells,
+    inside_presence_pct    = inside_row$presence_pct,
+    outside_total_cells    = outside_row$total_cells,
+    outside_presence_cells = outside_row$presence_cells,
+    outside_presence_pct   = outside_row$presence_pct,
+    ratio_to_outside       = round(inside_row$presence_pct / outside_row$presence_pct, 2)
+  )
+}))
+
+# Optional: round presence proportions for readability
+lat_band_summary$inside_presence_pct  <- round(lat_band_summary$inside_presence_pct, 3)
+lat_band_summary$outside_presence_pct <- round(lat_band_summary$outside_presence_pct, 3)
+
+# Write inside vs outside by latitude band
+write.csv(
+  lat_band_summary,
+  "outputs/summary_presence_inside_vs_outside_by_latband_spsN_v03.csv",
+  row.names = FALSE
+)
 
 # =============================================================================
 # 7) Front polygons: version for plotting (WITH dateline wrapping)
