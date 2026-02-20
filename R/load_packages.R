@@ -12,7 +12,7 @@
 # Usage notes:
 #   - Default behavior is "fail fast" if packages are missing.
 #   - To allow auto-install (interactive setup only), set:
-#       Sys.setenv(ALLOW_R_INSTALL = "1")
+#       Sys.setenv(ALLOW_R_INSTALL = "1") # nolint: commented_code_linter.
 #     or from shell:
 #       ALLOW_R_INSTALL=1 R -q -f R/load_packages.R
 
@@ -48,7 +48,7 @@ if (requireNamespace("renv", quietly = TRUE)) {
 # --- Install logic (opt-in) ---
 if (length(missing)) {
   msg <- paste0(
-    "Missing packages (", length(missing), "): ", paste(missing, collapse = ", ")
+    "Missing packages (", length(missing), "): ", paste(missing, collapse = ", ") # nolint
   )
 
   if (!allow_install) {
