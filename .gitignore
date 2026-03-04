@@ -106,6 +106,8 @@ data/birdlife_rs_005
 
 data/fronts_dynamical
 
+data/thermal_fronts
+
 outputs/iucn_sps
 
 outputs/sdms_gfw
