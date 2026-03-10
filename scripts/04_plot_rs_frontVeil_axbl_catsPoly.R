@@ -16,6 +16,9 @@ if (requireNamespace("renv", quietly = TRUE)) {
 source("R/load_packages.R")
 source("R/utils_helpers.R")
 
+# Disable s2 spherical geometry (avoids invalid-loop errors for raster-derived polygons)
+sf::sf_use_s2(FALSE)
+
 # --- Inputs
 rs <- terra::rast("outputs/count_per_pixel_birdlife_plus_sdms.tif")
 front_pct <- terra::rast("outputs/fsle_quartiles_global/fsle_quartiles_1994_2022_Q3_pct.tif")
@@ -72,7 +75,6 @@ veil_df <- front_df[!is.na(front_df$alpha_norm), c("x", "y", "alpha_norm")]
 # --- Front polygons cleaning + dateline wrapping
 front_poly <- sf::st_as_sf(front_poly)
 front_poly_mask <- sf::st_make_valid(front_poly)
-front_poly_mask <- sf::st_collection_extract(front_poly_mask, "POLYGON")
 front_poly_mask <- sf::st_union(front_poly_mask)
 
 front_poly_plot <- sf::st_wrap_dateline(
@@ -84,6 +86,7 @@ front_poly_plot <- sf::st_wrap_dateline(
 # --- Earth outline
 lon <- seq(-180, 180, by = 0.5)
 lat <- seq(-90, 90, by = 0.5)
+
 ring <- rbind(
   cbind(lon,  90),
   cbind(rep( 180, length(lat)), rev(lat)),
