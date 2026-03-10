@@ -26,8 +26,8 @@ front_poly <- readRDS("outputs/fsle_front_polygons/fsle_quartiles_1994_2022_Q3_p
 land <- get_world_latlon()
 
 # --- User options
-species_breaks <- c(0, 20, 40, 60, 80)
-species_labels <- c("1-20", "20-40", "40-60", "60-80")
+species_breaks <- c(0, 20, 35, 50, Inf)
+species_labels <- c("1-20", "20-35", "35-50", "50+")
 species_palette <- "YlOrRd"
 
 thr <- 50
