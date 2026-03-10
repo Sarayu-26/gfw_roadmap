@@ -42,7 +42,6 @@ echo
 Rscript -e 'if (requireNamespace("renv", quietly=TRUE)) renv::activate()'
 
 # Run plotting script
-Rscript scripts/04_plot_rs_frontVeil_axbl_frontPolyCats.R
-
+Rscript scripts/04_plot_rs_frontVeil_axbl_catsPoly.R
 echo
 echo "Job finished at: $(date)"
