@@ -77,10 +77,17 @@ front_df$alpha_norm[ok] <- 1 - (front_df$front[ok] / thr)
 
 veil_df <- front_df[!is.na(front_df$alpha_norm), c("x", "y", "alpha_norm")]
 
-# --- Front polygons to plotting CRS
-# Keep only valid polygons if needed
+# --- Front polygons: clean for plotting and wrap dateline
 front_poly <- sf::st_as_sf(front_poly)
-front_poly <- sf::st_make_valid(front_poly)
+front_poly_mask <- sf::st_make_valid(front_poly)
+front_poly_mask <- sf::st_collection_extract(front_poly_mask, "POLYGON")
+front_poly_mask <- sf::st_union(front_poly_mask)
+
+front_poly_plot <- sf::st_wrap_dateline(
+  front_poly_mask,
+  options = c("WRAPDATELINE=YES", "DATELINEOFFSET=180"),
+  quiet = TRUE
+)
 
 # --- Earth outline (true projection boundary)
 lon <- seq(-180, 180, by = 0.5)
@@ -133,7 +140,7 @@ p4 <- ggplot2::ggplot() +
   ggplot2::scale_alpha(range = c(0, max_veil_alpha), guide = "none") +
   # Front polygons
   ggplot2::geom_sf(
-    data = front_poly,
+    data = front_poly_plot,
     fill = NA,
     color = front_poly_color,
     linewidth = front_poly_linewidth,
