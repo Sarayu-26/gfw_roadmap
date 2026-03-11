@@ -198,3 +198,10 @@ make_front_polygon <- function(rs_dir,
     extent_fixed     = extent_fixed
   ))
 }
+
+# make_front_polygon(
+#   rs_dir = "outputs/fsle_quartiles_global/fsle_quartiles_1994_2022_Q3_pct.tif",
+#   cutoff = 0.5,
+#   cutoff_type = "normalized",
+#   outdir = ""
+# )
