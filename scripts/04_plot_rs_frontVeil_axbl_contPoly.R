@@ -25,7 +25,7 @@ land <- get_world_latlon()
 
 # --- User options
 species_palette <- "YlOrRd"
-species_direction <- -1
+species_direction <- 1
 thr <- 50
 max_veil_alpha <- 0.45
 
