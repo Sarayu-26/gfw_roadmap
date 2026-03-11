@@ -34,8 +34,8 @@ thr <- 50
 # - front <  thr  -> progressively fainter
 #   * alpha at front = 0   -> alpha_min_below
 #   * alpha at front ~ 50  -> alpha_max_below
-alpha_min_below <- 0.12
-alpha_max_below <- 0.75
+alpha_min_below <- 0.04 #0.12
+alpha_max_below <- 0.55 #0.75
 
 front_poly_color <- "firebrick3"
 front_poly_linewidth <- 0.3
