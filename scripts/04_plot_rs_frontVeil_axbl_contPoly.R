@@ -24,7 +24,7 @@ front_poly <- readRDS("outputs/fsle_front_polygons/fsle_quartiles_1994_2022_Q3_p
 land <- get_world_latlon()
 
 # --- User options
-species_palette <- "RdYlBu"
+species_palette <- "YlOrRd"
 species_direction <- -1
 thr <- 50
 max_veil_alpha <- 0.45
