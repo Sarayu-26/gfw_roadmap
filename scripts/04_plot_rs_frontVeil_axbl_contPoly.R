@@ -9,9 +9,7 @@
 # =============================================================================
 
 # --- Project runtime (safe to call repeatedly)
-if (requireNamespace("renv", quietly = TRUE)) {
-  try(renv::activate(), silent = TRUE)
-}
+source("renv/activate.R")
 
 source("R/load_packages.R")
 source("R/utils_helpers.R")
