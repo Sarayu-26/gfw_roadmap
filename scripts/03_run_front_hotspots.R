@@ -12,7 +12,7 @@ source("R/load_packages.R")
 source("R/utils_helpers.R")
 
 # --- Load hotspot function
-source("R/make_front_hotspot_polygons.R")
+source("R/front_hotspot_polygons.R")
 
 
 # =============================================================================
