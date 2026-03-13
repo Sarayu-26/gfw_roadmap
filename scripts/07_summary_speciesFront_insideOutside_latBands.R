@@ -74,32 +74,29 @@ run_front_summary <- function(
   # ---------------------------------------------------------------------------
   front_poly <- sf::st_as_sf(front_poly)
   front_poly_mask <- sf::st_make_valid(front_poly)
+  front_poly_mask <- sf::st_collection_extract(front_poly_mask, "POLYGON")
   front_poly_mask <- sf::st_union(front_poly_mask)
   
   front_vect <- terra::vect(front_poly_mask)
   front_mask <- terra::rasterize(front_vect, rs, field = 1)
   
   # ---------------------------------------------------------------------------
-  # 5) Extract aligned raster vectors directly
-  #    This avoids coordinate-based merges, which can silently drop rows
+  # 5) Build aligned base table
+  #    Keep x/y from as.data.frame(rs, xy=TRUE, na.rm=FALSE), then append
+  #    area and inside/outside mask by raster cell order
   # ---------------------------------------------------------------------------
-  vals <- terra::values(rs, mat = FALSE)
+  df_raw <- as.data.frame(rs, xy = TRUE, na.rm = FALSE)
+  colnames(df_raw) <- c("x", "y", "val")
+  
   areas <- terra::values(area_rs, mat = FALSE)
   inside <- !is.na(terra::values(front_mask))
-  xy <- terra::crds(rs, df = TRUE)
   
   # Keep only valid ocean cells (same logic as old 6b)
-  valid <- !is.na(vals)
+  valid <- !is.na(df_raw$val)
   
-  df <- data.frame(
-    x = xy$x[valid],
-    y = xy$y[valid],
-    val = vals[valid],
-    cell_area_km2 = areas[valid],
-    inside_front = inside[valid],
-    row.names = NULL,
-    check.names = FALSE
-  )
+  df <- df_raw[valid, , drop = FALSE]
+  df$cell_area_km2 <- areas[valid]
+  df$inside_front <- inside[valid]
   
   # ---------------------------------------------------------------------------
   # 6) Latitude-band helpers
