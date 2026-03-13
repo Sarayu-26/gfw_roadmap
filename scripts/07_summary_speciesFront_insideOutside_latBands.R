@@ -64,61 +64,69 @@ run_front_summary <- function(
   rs <- terra::mask(rs, land_vect, inverse = TRUE)
   
   # ---------------------------------------------------------------------------
-  # 3) Cell area in km2
-  #    Important because lon/lat cells vary in area with latitude
-  # ---------------------------------------------------------------------------
-  area_rs <- terra::cellSize(rs, unit = "km")
-  
-  # ---------------------------------------------------------------------------
-  # 4) Clean polygons for masking and rasterize to species grid
-  # ---------------------------------------------------------------------------
-  front_poly <- sf::st_as_sf(front_poly)
-  front_poly_mask <- sf::st_make_valid(front_poly)
-  front_poly_mask <- sf::st_collection_extract(front_poly_mask, "POLYGON")
-  front_poly_mask <- sf::st_union(front_poly_mask)
-  
-  front_vect <- terra::vect(front_poly_mask)
-  front_mask <- terra::rasterize(front_vect, rs, field = 1)
-  
-  # ---------------------------------------------------------------------------
-  # 5) Build aligned base table
-  #    Keep x/y from as.data.frame(rs, xy=TRUE, na.rm=FALSE), then append
-  #    area and inside/outside mask by raster cell order
+  # 3) Build base species table exactly following old 6b logic
   # ---------------------------------------------------------------------------
   df_raw <- as.data.frame(rs, xy = TRUE, na.rm = FALSE)
   colnames(df_raw) <- c("x", "y", "val")
   
-  areas <- terra::values(area_rs, mat = FALSE)
-  inside <- !is.na(terra::values(front_mask))
-  
-  # Keep only valid ocean cells (same logic as old 6b)
-  valid <- !is.na(df_raw$val)
-  
-  df <- df_raw[valid, , drop = FALSE]
-  df$cell_area_km2 <- areas[valid]
-  df$inside_front <- inside[valid]
+  # ---------------------------------------------------------------------------
+  # 4) Clean front polygons for masking
+  # ---------------------------------------------------------------------------
+  front_poly_mask <- sf::st_make_valid(front_poly)
+  front_poly_mask <- sf::st_collection_extract(front_poly_mask, "POLYGON")
+  front_poly_mask <- sf::st_union(front_poly_mask)
   
   # ---------------------------------------------------------------------------
-  # 6) Latitude-band helpers
+  # 5) Rasterize polygons to the same grid as species raster
   # ---------------------------------------------------------------------------
-  is_all <- function(d) rep(TRUE, nrow(d))
+  front_vect <- terra::vect(front_poly_mask)
+  front_mask <- terra::rasterize(front_vect, rs, field = 1)
+  
+  # ---------------------------------------------------------------------------
+  # 6) Reproduce old 6b alignment exactly
+  # ---------------------------------------------------------------------------
+  df_pres <- df_raw
+  valid <- !is.na(df_pres$val)
+  df_pres <- df_pres[valid, , drop = FALSE]
+  
+  inside_pres <- !is.na(terra::values(front_mask))
+  inside_pres <- inside_pres[valid]
+  
+  # ---------------------------------------------------------------------------
+  # 7) Add cell area in km2 using the same valid mask
+  # ---------------------------------------------------------------------------
+  area_rs <- terra::cellSize(rs, unit = "km")
+  area_vals <- terra::values(area_rs, mat = FALSE)
+  df_pres$cell_area_km2 <- area_vals[valid]
+  
+  # Subsets (same backbone as old code)
+  df_all_pres <- df_pres
+  df_in_pres  <- df_pres[inside_pres, , drop = FALSE]
+  df_out_pres <- df_pres[!inside_pres, , drop = FALSE]
+  
+  # ---------------------------------------------------------------------------
+  # 8) Latitude-band helpers (same as old code)
+  # ---------------------------------------------------------------------------
   is_trop <- function(d) d$y >= -23.5 & d$y <= 23.5
   is_temp <- function(d) abs(d$y) > 23.5 & abs(d$y) <= 60
   is_temp_north <- function(d) d$y > 23.5 & d$y <= 60
   is_temp_south <- function(d) d$y < -23.5 & d$y >= -60
   
-  band_funs <- list(
-    all = is_all,
-    trop = is_trop,
-    temp = is_temp,
-    temp_north = is_temp_north,
-    temp_south = is_temp_south
-  )
+  bands <- c("all", "trop", "temp", "temp_north", "temp_south")
+  
+  band_filter <- function(d, band) {
+    if (band == "all") return(d)
+    if (band == "trop") return(d[is_trop(d), , drop = FALSE])
+    if (band == "temp") return(d[is_temp(d), , drop = FALSE])
+    if (band == "temp_north") return(d[is_temp_north(d), , drop = FALSE])
+    if (band == "temp_south") return(d[is_temp_south(d), , drop = FALSE])
+    stop("Unknown band: ", band)
+  }
   
   # ---------------------------------------------------------------------------
-  # 7) Summary helpers
+  # 9) Summary helpers
   # ---------------------------------------------------------------------------
-  summarize_presence <- function(d) {
+  presence_stats <- function(d) {
     if (nrow(d) == 0) {
       return(c(
         total_cells = 0,
@@ -126,9 +134,7 @@ run_front_summary <- function(
         presence_pct = NA_real_
       ))
     }
-    
     pres <- d$val > 0
-    
     c(
       total_cells = length(pres),
       presence_cells = sum(pres, na.rm = TRUE),
@@ -136,23 +142,21 @@ run_front_summary <- function(
     )
   }
   
-  summarize_area <- function(d) {
+  area_stats <- function(d) {
     if (nrow(d) == 0) {
       return(c(
         total_area_km2 = 0,
         presence_area_km2 = 0
       ))
     }
-    
     pres <- d$val > 0
-    
     c(
       total_area_km2 = sum(d$cell_area_km2, na.rm = TRUE),
       presence_area_km2 = sum(d$cell_area_km2[pres], na.rm = TRUE)
     )
   }
   
-  summarize_species_area <- function(d) {
+  species_area_stats <- function(d) {
     if (nrow(d) == 0) {
       return(c(
         species_area_index = 0,
@@ -161,7 +165,6 @@ run_front_summary <- function(
     }
     
     pres <- d$val > 0
-    
     species_area_index <- sum(d$val * d$cell_area_km2, na.rm = TRUE)
     occupied_area <- sum(d$cell_area_km2[pres], na.rm = TRUE)
     
@@ -181,17 +184,14 @@ run_front_summary <- function(
   }
   
   # ---------------------------------------------------------------------------
-  # 8) Build band-wise tables
+  # 10) Presence table (same structure as old 6b output)
   # ---------------------------------------------------------------------------
-  presence_rows <- lapply(names(band_funs), function(b) {
-    band_fun <- band_funs[[b]]
+  presence_tbl <- do.call(rbind, lapply(bands, function(b) {
+    d_in  <- band_filter(df_in_pres, b)
+    d_out <- band_filter(df_out_pres, b)
     
-    d_band <- df[band_fun(df), ]
-    d_in <- d_band[d_band$inside_front, ]
-    d_out <- d_band[!d_band$inside_front, ]
-    
-    p_in <- summarize_presence(d_in)
-    p_out <- summarize_presence(d_out)
+    p_in <- presence_stats(d_in)
+    p_out <- presence_stats(d_out)
     
     data.frame(
       front_type = front_type,
@@ -216,19 +216,17 @@ run_front_summary <- function(
       row.names = NULL,
       check.names = FALSE
     )
-  })
+  }))
   
-  presence_tbl <- do.call(rbind, presence_rows)
-  
-  area_rows <- lapply(names(band_funs), function(b) {
-    band_fun <- band_funs[[b]]
+  # ---------------------------------------------------------------------------
+  # 11) Area table
+  # ---------------------------------------------------------------------------
+  area_tbl <- do.call(rbind, lapply(bands, function(b) {
+    d_in  <- band_filter(df_in_pres, b)
+    d_out <- band_filter(df_out_pres, b)
     
-    d_band <- df[band_fun(df), ]
-    d_in <- d_band[d_band$inside_front, ]
-    d_out <- d_band[!d_band$inside_front, ]
-    
-    a_in <- summarize_area(d_in)
-    a_out <- summarize_area(d_out)
+    a_in <- area_stats(d_in)
+    a_out <- area_stats(d_out)
     
     data.frame(
       front_type = front_type,
@@ -249,19 +247,17 @@ run_front_summary <- function(
       row.names = NULL,
       check.names = FALSE
     )
-  })
+  }))
   
-  area_tbl <- do.call(rbind, area_rows)
-  
-  species_area_rows <- lapply(names(band_funs), function(b) {
-    band_fun <- band_funs[[b]]
+  # ---------------------------------------------------------------------------
+  # 12) Species-area index table
+  # ---------------------------------------------------------------------------
+  species_area_tbl <- do.call(rbind, lapply(bands, function(b) {
+    d_in  <- band_filter(df_in_pres, b)
+    d_out <- band_filter(df_out_pres, b)
     
-    d_band <- df[band_fun(df), ]
-    d_in <- d_band[d_band$inside_front, ]
-    d_out <- d_band[!d_band$inside_front, ]
-    
-    s_in <- summarize_species_area(d_in)
-    s_out <- summarize_species_area(d_out)
+    s_in <- species_area_stats(d_in)
+    s_out <- species_area_stats(d_out)
     
     data.frame(
       front_type = front_type,
@@ -278,19 +274,17 @@ run_front_summary <- function(
       row.names = NULL,
       check.names = FALSE
     )
-  })
+  }))
   
-  species_area_tbl <- do.call(rbind, species_area_rows)
-  
-  density_rows <- lapply(names(band_funs), function(b) {
-    band_fun <- band_funs[[b]]
+  # ---------------------------------------------------------------------------
+  # 13) Species density table
+  # ---------------------------------------------------------------------------
+  density_tbl <- do.call(rbind, lapply(bands, function(b) {
+    d_in  <- band_filter(df_in_pres, b)
+    d_out <- band_filter(df_out_pres, b)
     
-    d_band <- df[band_fun(df), ]
-    d_in <- d_band[d_band$inside_front, ]
-    d_out <- d_band[!d_band$inside_front, ]
-    
-    s_in <- summarize_species_area(d_in)
-    s_out <- summarize_species_area(d_out)
+    s_in <- species_area_stats(d_in)
+    s_out <- species_area_stats(d_out)
     
     data.frame(
       front_type = front_type,
@@ -311,12 +305,10 @@ run_front_summary <- function(
       row.names = NULL,
       check.names = FALSE
     )
-  })
-  
-  density_tbl <- do.call(rbind, density_rows)
+  }))
   
   # ---------------------------------------------------------------------------
-  # 9) Write outputs
+  # 14) Write outputs
   # ---------------------------------------------------------------------------
   write.csv(
     presence_tbl,
