@@ -64,29 +64,13 @@ run_front_summary <- function(
   rs <- terra::mask(rs, land_vect, inverse = TRUE)
   
   # ---------------------------------------------------------------------------
-  # 3) Build base data frame from species raster
-  #    Keep zeros for presence/absence and area summaries
-  # ---------------------------------------------------------------------------
-  df_raw <- as.data.frame(rs, xy = TRUE, na.rm = FALSE)
-  colnames(df_raw) <- c("x", "y", "val")
-  
-  valid <- !is.na(df_raw$val)
-  df <- df_raw[valid, ]
-  
-  # ---------------------------------------------------------------------------
-  # 4) Cell area in km2
+  # 3) Cell area in km2
   #    Important because lon/lat cells vary in area with latitude
   # ---------------------------------------------------------------------------
   area_rs <- terra::cellSize(rs, unit = "km")
-  area_df <- as.data.frame(area_rs, xy = TRUE, na.rm = FALSE)
-  colnames(area_df) <- c("x", "y", "cell_area_km2")
-  area_df <- area_df[valid, ]
-  
-  # Join area to species dataframe
-  df <- merge(df, area_df, by = c("x", "y"), all.x = TRUE, sort = FALSE)
   
   # ---------------------------------------------------------------------------
-  # 5) Clean polygons for masking and rasterize to species grid
+  # 4) Clean polygons for masking and rasterize to species grid
   # ---------------------------------------------------------------------------
   front_poly <- sf::st_as_sf(front_poly)
   front_poly_mask <- sf::st_make_valid(front_poly)
@@ -95,10 +79,27 @@ run_front_summary <- function(
   front_vect <- terra::vect(front_poly_mask)
   front_mask <- terra::rasterize(front_vect, rs, field = 1)
   
+  # ---------------------------------------------------------------------------
+  # 5) Extract aligned raster vectors directly
+  #    This avoids coordinate-based merges, which can silently drop rows
+  # ---------------------------------------------------------------------------
+  vals <- terra::values(rs, mat = FALSE)
+  areas <- terra::values(area_rs, mat = FALSE)
   inside <- !is.na(terra::values(front_mask))
-  inside <- inside[valid]
+  xy <- terra::crds(rs, df = TRUE)
   
-  df$inside_front <- inside
+  # Keep only valid ocean cells (same logic as old 6b)
+  valid <- !is.na(vals)
+  
+  df <- data.frame(
+    x = xy$x[valid],
+    y = xy$y[valid],
+    val = vals[valid],
+    cell_area_km2 = areas[valid],
+    inside_front = inside[valid],
+    row.names = NULL,
+    check.names = FALSE
+  )
   
   # ---------------------------------------------------------------------------
   # 6) Latitude-band helpers
@@ -177,6 +178,11 @@ run_front_summary <- function(
     )
   }
   
+  safe_ratio <- function(num, den, digits = 2) {
+    if (is.na(num) || is.na(den) || den == 0) return(NA_real_)
+    round(num / den, digits)
+  }
+  
   # ---------------------------------------------------------------------------
   # 8) Build band-wise tables
   # ---------------------------------------------------------------------------
@@ -199,8 +205,9 @@ run_front_summary <- function(
       outside_total_cells = unname(p_out["total_cells"]),
       outside_presence_cells = unname(p_out["presence_cells"]),
       outside_presence_pct = round(unname(p_out["presence_pct"]), 3),
-      ratio_to_outside = round(
-        unname(p_in["presence_pct"]) / unname(p_out["presence_pct"]), 2
+      ratio_to_outside = safe_ratio(
+        unname(p_in["presence_pct"]),
+        unname(p_out["presence_pct"])
       ),
       units_inside_total_cells = "cells",
       units_inside_presence_cells = "cells",
@@ -233,8 +240,9 @@ run_front_summary <- function(
       inside_presence_area_km2 = round(unname(a_in["presence_area_km2"]), 2),
       outside_total_area_km2 = round(unname(a_out["total_area_km2"]), 2),
       outside_presence_area_km2 = round(unname(a_out["presence_area_km2"]), 2),
-      ratio_presence_area_to_outside = round(
-        unname(a_in["presence_area_km2"]) / unname(a_out["presence_area_km2"]), 2
+      ratio_presence_area_to_outside = safe_ratio(
+        unname(a_in["presence_area_km2"]),
+        unname(a_out["presence_area_km2"])
       ),
       units_inside_total_area_km2 = "km2",
       units_inside_presence_area_km2 = "km2",
@@ -263,8 +271,9 @@ run_front_summary <- function(
       band = b,
       inside_species_area_index = round(unname(s_in["species_area_index"]), 2),
       outside_species_area_index = round(unname(s_out["species_area_index"]), 2),
-      ratio_species_area_to_outside = round(
-        unname(s_in["species_area_index"]) / unname(s_out["species_area_index"]), 2
+      ratio_species_area_to_outside = safe_ratio(
+        unname(s_in["species_area_index"]),
+        unname(s_out["species_area_index"])
       ),
       units_inside_species_area_index = "species·km2",
       units_outside_species_area_index = "species·km2",
@@ -295,9 +304,9 @@ run_front_summary <- function(
       outside_mean_species_per_occupied_km2 = round(
         unname(s_out["mean_species_per_occupied_km2"]), 6
       ),
-      ratio_density_to_outside = round(
-        unname(s_in["mean_species_per_occupied_km2"]) /
-          unname(s_out["mean_species_per_occupied_km2"]), 2
+      ratio_density_to_outside = safe_ratio(
+        unname(s_in["mean_species_per_occupied_km2"]),
+        unname(s_out["mean_species_per_occupied_km2"])
       ),
       units_inside_mean_species_per_occupied_km2 = "species/km2",
       units_outside_mean_species_per_occupied_km2 = "species/km2",
@@ -345,7 +354,7 @@ run_front_summary <- function(
 }
 
 # -----------------------------------------------------------------------------
-# Runs
+# Example runs
 # -----------------------------------------------------------------------------
 
 # FSLE
