@@ -29,15 +29,25 @@ make_front_polygon(
 
 
 # =============================================================================
-# 2. THERMAL FRONT HOTSPOTS (top decile)
+# 2. THERMAL FRONT HOTSPOTS (top decile / top quartile)
 # =============================================================================
 
 make_front_polygon(
   rs_dir = "data/fronts_thermal/global_thermal_fronts_climatology_miller_v1.0_overall.g7.front_step4_sst.UIR.L3_pfront.data.nc",
-  cutoff = 0.9,
+  cutoff = 0.75,
   cutoff_type = "quantile",
   outdir = "outputs/thermal_front_polygons",
   outfile = "thermal_front_persistence_q90_minpatch20",
+  remove_small_patches = TRUE,
+  min_patch_cells = 20
+)
+
+make_front_polygon(
+  rs_dir = "data/fronts_thermal/global_thermal_fronts_climatology_miller_v1.0_overall.g7.front_step4_sst.UIR.L3_pfront.data_median39.nc",
+  cutoff = 0.75,
+  cutoff_type = "quantile",
+  outdir = "outputs/thermal_front_polygons",
+  outfile = "thermal_front_persistence_q75_data_median39",
   remove_small_patches = TRUE,
   min_patch_cells = 20
 )
