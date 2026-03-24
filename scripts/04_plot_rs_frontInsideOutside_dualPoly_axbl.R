@@ -119,10 +119,11 @@ df_inside <- df[df$zone == "inside", , drop = FALSE]
 df_outside <- df[df$zone == "outside", , drop = FALSE]
 
 # --- Breaks for outside scale using outside-only values
+outside_min <- 1
 if (nrow(df_outside) > 0) {
   outside_max <- max(df_outside$val, na.rm = TRUE)
-  brks_outside <- pretty(c(species_min, outside_max), n = 6)
-  brks_outside <- brks_outside[brks_outside >= species_min & brks_outside <= outside_max]
+  brks_outside <- pretty(c(outside_min, outside_max), n = 6)
+  brks_outside <- brks_outside[brks_outside >= outside_min & brks_outside <= outside_max]
 } else {
   outside_max <- species_max
   brks_outside <- brks_inside
@@ -161,27 +162,7 @@ theme_map <- ggplot2::theme_void() +
 # --- Plot
 p4 <- ggplot2::ggplot() +
 
-  # outside first, grey scale
-  ggplot2::geom_tile(
-    data = df_outside,
-    ggplot2::aes(x = x, y = y, fill = val),
-    na.rm = TRUE
-  ) +
-
-  ggplot2::scale_fill_gradient(
-    name = "Species at threat\n(outside)",
-    low = outside_low,
-    high = outside_high,
-    breaks = brks_outside,
-    labels = scales::label_number(accuracy = 1),
-    limits = c(species_min, outside_max),
-    oob = scales::squish,
-    na.value = NA
-  ) +
-
-  ggnewscale::new_scale_fill() +
-
-  # inside on top, full color scale
+  # inside first, full color scale
   ggplot2::geom_tile(
     data = df_inside,
     ggplot2::aes(x = x, y = y, fill = val),
@@ -197,6 +178,26 @@ p4 <- ggplot2::ggplot() +
     oob       = scales::squish,
     na.value  = NA,
     direction = species_direction
+  ) +
+
+  ggnewscale::new_scale_fill() +
+
+  # outside second, grey scale
+  ggplot2::geom_tile(
+    data = df_outside,
+    ggplot2::aes(x = x, y = y, fill = val),
+    na.rm = TRUE
+  ) +
+
+  ggplot2::scale_fill_gradient(
+    name = "Species at threat\n(outside)",
+    low = outside_low,
+    high = outside_high,
+    breaks = brks_outside,
+    labels = scales::label_number(accuracy = 1),
+    limits = c(outside_min, outside_max),
+    oob = scales::squish,
+    na.value = NA
   ) +
 
   # FSLE outline
