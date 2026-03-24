@@ -21,7 +21,7 @@
 #   outputs/thermal_front_polygons/thermal_front_persistence_q75_data_median39.rds
 #
 # Creates:
-#   /home/hpc-scratch/ibrito/species_threat_fronts_AquaXBirdlife_insideOutside_dualPoly_v01a.png
+#   /home/SB5/species_threat_fronts_AquaXBirdlife_insideOutside_dualPoly_v01a.png
 #
 # Notes:
 # - Species at threat is the only raster variable plotted
@@ -55,7 +55,7 @@ front_poly_thermal <- readRDS(
 land <- get_world_latlon()
 
 # --- Output
-out_file <- "/home/hpc-scratch/ibrito/species_threat_fronts_AquaXBirdlife_insideOutside_dualPoly_v01a.png"
+out_file <- "/home/SB5/species_threat_fronts_AquaXBirdlife_insideOutside_dualPoly_v01a.png"
 
 # --- User options
 species_palette <- "YlOrRd"
@@ -177,7 +177,8 @@ p4 <- ggplot2::ggplot() +
     limits    = c(species_min, species_max),
     oob       = scales::squish,
     na.value  = NA,
-    direction = species_direction
+    direction = species_direction,
+    guide     = ggplot2::guide_colourbar(order = 1)
   ) +
 
   ggnewscale::new_scale_fill() +
@@ -197,7 +198,8 @@ p4 <- ggplot2::ggplot() +
     labels = scales::label_number(accuracy = 1),
     limits = c(outside_min, outside_max),
     oob = scales::squish,
-    na.value = NA
+    na.value = NA,
+    guide = ggplot2::guide_colourbar(order = 2)
   ) +
 
   # FSLE outline
