@@ -92,27 +92,27 @@ brks_inside <- brks_inside[brks_inside >= species_min & brks_inside <= species_m
 clean_wrap_poly <- function(x) {
   x <- sf::st_as_sf(x)
   x <- sf::st_make_valid(x)
-  x <- sf::st_union(x)
 
-  sf::st_wrap_dateline(
+  x <- sf::st_wrap_dateline(
     x,
     options = c("WRAPDATELINE=YES", "DATELINEOFFSET=180"),
     quiet = TRUE
   )
+
+  sf::st_make_valid(x)
 }
 
 # --- Clean and wrap polygons separately for plotting
 front_poly_fsle_plot <- clean_wrap_poly(front_poly_fsle)
 front_poly_thermal_plot <- clean_wrap_poly(front_poly_thermal)
 
-# --- Build combined polygon for inside/outside classification
-front_poly_union <- sf::st_union(front_poly_fsle_plot, front_poly_thermal_plot)
-front_poly_union <- sf::st_make_valid(front_poly_union)
-
 # --- Convert species pixels to sf points and classify inside/outside
 pts <- sf::st_as_sf(df, coords = c("x", "y"), crs = 4326, remove = FALSE)
 
-inside_idx <- lengths(sf::st_intersects(pts, front_poly_union)) > 0
+inside_fsle <- lengths(sf::st_intersects(pts, front_poly_fsle_plot)) > 0
+inside_thermal <- lengths(sf::st_intersects(pts, front_poly_thermal_plot)) > 0
+inside_idx <- inside_fsle | inside_thermal
+
 df$zone <- ifelse(inside_idx, "inside", "outside")
 
 df_inside <- df[df$zone == "inside", , drop = FALSE]
