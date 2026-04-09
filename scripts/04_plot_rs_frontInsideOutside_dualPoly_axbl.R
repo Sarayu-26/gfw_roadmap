@@ -67,6 +67,12 @@ simplify_front_polygons <- TRUE
 simplify_tolerance <- 0.05
 simplify_preserve_topology <- TRUE
 
+# Optional scale compression for publication figures
+scale_style <- "quartile_bins"
+scale_limit_mode <- "quartile"
+quartile_prob <- 0.75
+quartile_min_value <- 1
+
 # --- Output
 out_file <- if (isTRUE(simplify_front_polygons)) {
   "/home/SB5/species_threat_fronts_AquaXBirdlife_insideOutside_dualPoly_v01a_simplified.png"
@@ -89,13 +95,6 @@ rs <- terra::mask(rs, land_v, inverse = TRUE)
 df <- as.data.frame(rs, xy = TRUE, na.rm = FALSE)
 names(df) <- c("x", "y", "val")
 df <- df[!is.na(df$val) & df$val > 0, ]
-
-# --- Auto limits and breaks for inside scale
-species_min <- 1
-species_max <- max(df$val, na.rm = TRUE)
-
-brks_inside <- pretty(c(species_min, species_max), n = 8)
-brks_inside <- brks_inside[brks_inside >= species_min & brks_inside <= species_max]
 
 # --- Polygon cleaning helper
 clean_wrap_poly <- function(x) {
@@ -158,16 +157,143 @@ df$zone <- ifelse(inside_idx, "inside", "outside")
 df_inside <- df[df$zone == "inside", , drop = FALSE]
 df_outside <- df[df$zone == "outside", , drop = FALSE]
 
-# --- Breaks for outside scale using outside-only values
+# --- Helpers for scale limits and breaks
+compute_scale_max <- function(values,
+                              mode = c("full", "quartile"),
+                              prob = 0.75,
+                              fallback = 1,
+                              quartile_min_value = 1) {
+  mode <- match.arg(mode)
+  values <- values[is.finite(values)]
+
+  if (length(values) == 0) {
+    return(fallback)
+  }
+
+  if (mode == "quartile") {
+    values_q <- values[values >= quartile_min_value]
+    if (length(values_q) == 0) {
+      return(fallback)
+    }
+
+    qv <- as.numeric(stats::quantile(values_q, probs = prob, na.rm = TRUE))
+    return(max(fallback, qv))
+  }
+
+  max(values, na.rm = TRUE)
+}
+
+compute_scale_breaks <- function(min_val, max_val, n = 8) {
+  if (!is.finite(max_val) || max_val <= min_val) {
+    return(min_val)
+  }
+
+  brks <- pretty(c(min_val, max_val), n = n)
+  brks <- brks[brks >= min_val & brks <= max_val]
+
+  if (length(brks) == 0) {
+    brks <- c(min_val, max_val)
+  }
+
+  unique(brks)
+}
+
+compute_quartile_breaks <- function(values, quartile_min_value = 1) {
+  values <- values[is.finite(values) & values >= quartile_min_value]
+
+  if (length(values) == 0) {
+    return(c(quartile_min_value, quartile_min_value))
+  }
+
+  unique(stats::quantile(values, probs = seq(0, 1, 0.25), na.rm = TRUE))
+}
+
+classify_quartiles <- function(values,
+                               breaks,
+                               quartile_min_value = 1,
+                               prefix = "Q") {
+  out <- rep(NA_character_, length(values))
+  valid <- is.finite(values) & values >= quartile_min_value
+
+  if (!any(valid)) {
+    return(factor(out, levels = paste0(prefix, 1:4)))
+  }
+
+  if (length(breaks) < 2) {
+    out[valid] <- paste0(prefix, 1)
+    return(factor(out, levels = paste0(prefix, 1:4)))
+  }
+
+  bins <- cut(
+    values[valid],
+    breaks = breaks,
+    include.lowest = TRUE,
+    right = TRUE,
+    dig.lab = 8
+  )
+
+  bin_ids <- as.integer(bins)
+  bin_ids[is.na(bin_ids)] <- 1L
+  bin_ids <- pmin(bin_ids, 4L)
+  out[valid] <- paste0(prefix, bin_ids)
+
+  factor(out, levels = paste0(prefix, 1:4))
+}
+
+# --- Auto limits and breaks for inside/outside scales
+species_min <- 1
+species_max <- compute_scale_max(
+  df$val,
+  mode = scale_limit_mode,
+  prob = quartile_prob,
+  fallback = species_min,
+  quartile_min_value = quartile_min_value
+)
+brks_inside <- compute_scale_breaks(species_min, species_max, n = 8)
+
 outside_min <- 1
 if (nrow(df_outside) > 0) {
-  outside_max <- max(df_outside$val, na.rm = TRUE)
-  brks_outside <- pretty(c(outside_min, outside_max), n = 6)
-  brks_outside <- brks_outside[brks_outside >= outside_min & brks_outside <= outside_max]
+  outside_max <- compute_scale_max(
+    df_outside$val,
+    mode = scale_limit_mode,
+    prob = quartile_prob,
+    fallback = outside_min,
+    quartile_min_value = quartile_min_value
+  )
+  brks_outside <- compute_scale_breaks(outside_min, outside_max, n = 6)
 } else {
   outside_max <- species_max
   brks_outside <- brks_inside
 }
+
+quartile_breaks_inside <- compute_quartile_breaks(
+  df_inside$val,
+  quartile_min_value = quartile_min_value
+)
+quartile_breaks_outside <- compute_quartile_breaks(
+  df_outside$val,
+  quartile_min_value = quartile_min_value
+)
+
+df_inside$val_quartile <- classify_quartiles(
+  df_inside$val,
+  breaks = quartile_breaks_inside,
+  quartile_min_value = quartile_min_value
+)
+df_outside$val_quartile <- classify_quartiles(
+  df_outside$val,
+  breaks = quartile_breaks_outside,
+  quartile_min_value = quartile_min_value
+)
+
+inside_quartile_colors <- setNames(
+  RColorBrewer::brewer.pal(4, species_palette),
+  paste0("Q", 1:4)
+)
+outside_quartile_colors <- setNames(
+  gray.colors(4, start = 0.92, end = 0.35),
+  paste0("Q", 1:4)
+)
 
 # --- Earth outline
 lon <- seq(-180, 180, by = 0.5)
@@ -200,47 +326,73 @@ theme_map <- ggplot2::theme_void() +
   )
 
 # --- Plot
-p4 <- ggplot2::ggplot() +
+p4 <- ggplot2::ggplot()
 
-  # inside first, full color scale
-  ggplot2::geom_tile(
-    data = df_inside,
-    ggplot2::aes(x = x, y = y, fill = val),
-    na.rm = TRUE
-  ) +
+if (identical(scale_style, "quartile_bins")) {
+  p4 <- p4 +
+    ggplot2::geom_tile(
+      data = df_inside,
+      ggplot2::aes(x = x, y = y, fill = val_quartile),
+      na.rm = TRUE
+    ) +
+    ggplot2::scale_fill_manual(
+      name = "Species at threat\n(inside)",
+      values = inside_quartile_colors,
+      drop = FALSE,
+      na.value = NA,
+      guide = ggplot2::guide_legend(order = 1)
+    ) +
+    ggnewscale::new_scale_fill() +
+    ggplot2::geom_tile(
+      data = df_outside,
+      ggplot2::aes(x = x, y = y, fill = val_quartile),
+      na.rm = TRUE
+    ) +
+    ggplot2::scale_fill_manual(
+      name = "Species at threat\n(outside)",
+      values = outside_quartile_colors,
+      drop = FALSE,
+      na.value = NA,
+      guide = ggplot2::guide_legend(order = 2)
+    )
+} else {
+  p4 <- p4 +
+    ggplot2::geom_tile(
+      data = df_inside,
+      ggplot2::aes(x = x, y = y, fill = val),
+      na.rm = TRUE
+    ) +
+    ggplot2::scale_fill_distiller(
+      name      = "Species at threat\n(inside)",
+      palette   = species_palette,
+      breaks    = brks_inside,
+      labels    = scales::label_number(accuracy = 1),
+      limits    = c(species_min, species_max),
+      oob       = scales::squish,
+      na.value  = NA,
+      direction = species_direction,
+      guide     = ggplot2::guide_colourbar(order = 1)
+    ) +
+    ggnewscale::new_scale_fill() +
+    ggplot2::geom_tile(
+      data = df_outside,
+      ggplot2::aes(x = x, y = y, fill = val),
+      na.rm = TRUE
+    ) +
+    ggplot2::scale_fill_gradient(
+      name = "Species at threat\n(outside)",
+      low = outside_low,
+      high = outside_high,
+      breaks = brks_outside,
+      labels = scales::label_number(accuracy = 1),
+      limits = c(outside_min, outside_max),
+      oob = scales::squish,
+      na.value = NA,
+      guide = ggplot2::guide_colourbar(order = 2)
+    )
+}
 
-  ggplot2::scale_fill_distiller(
-    name      = "Species at threat\n(inside)",
-    palette   = species_palette,
-    breaks    = brks_inside,
-    labels    = scales::label_number(accuracy = 1),
-    limits    = c(species_min, species_max),
-    oob       = scales::squish,
-    na.value  = NA,
-    direction = species_direction,
-    guide     = ggplot2::guide_colourbar(order = 1)
-  ) +
-
-  ggnewscale::new_scale_fill() +
-
-  # outside second, grey scale
-  ggplot2::geom_tile(
-    data = df_outside,
-    ggplot2::aes(x = x, y = y, fill = val),
-    na.rm = TRUE
-  ) +
-
-  ggplot2::scale_fill_gradient(
-    name = "Species at threat\n(outside)",
-    low = outside_low,
-    high = outside_high,
-    breaks = brks_outside,
-    labels = scales::label_number(accuracy = 1),
-    limits = c(outside_min, outside_max),
-    oob = scales::squish,
-    na.value = NA,
-    guide = ggplot2::guide_colourbar(order = 2)
-  ) +
+p4 <- p4 +
 
   # FSLE outline
   ggplot2::geom_sf(
