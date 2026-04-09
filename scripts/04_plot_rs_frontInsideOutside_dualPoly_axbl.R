@@ -64,7 +64,7 @@ front_poly_linewidth <- 0.3
 
 # Optional polygon simplification for cleaner publication outlines
 simplify_front_polygons <- TRUE
-simplify_tolerance <- 0.2
+simplify_tolerance <- 0.8
 simplify_preserve_topology <- TRUE
 
 # Optional scale compression for publication figures
@@ -240,6 +240,35 @@ classify_quartiles <- function(values,
   factor(out, levels = paste0(prefix, 1:4))
 }
 
+format_quartile_labels <- function(breaks, digits = 0, prefix = "Q") {
+  lvl <- paste0(prefix, 1:4)
+
+  if (length(breaks) < 2) {
+    out <- setNames(rep(">= 1", 4), lvl)
+    return(out)
+  }
+
+  n_bins <- min(4L, length(breaks) - 1L)
+  labs <- character(4)
+
+  for (i in seq_len(n_bins)) {
+    lo <- round(breaks[i], digits)
+    hi <- round(breaks[i + 1L], digits)
+
+    if (i == 1L) {
+      labs[i] <- paste0(lo, "-", hi)
+    } else {
+      labs[i] <- paste0(">", lo, "-", hi)
+    }
+  }
+
+  if (n_bins < 4L) {
+    labs[seq.int(n_bins + 1L, 4L)] <- labs[n_bins]
+  }
+
+  setNames(labs, lvl)
+}
+
 # --- Auto limits and breaks for inside/outside scales
 species_min <- 1
 species_max <- compute_scale_max(
@@ -294,6 +323,9 @@ outside_quartile_colors <- setNames(
   gray.colors(4, start = 0.92, end = 0.35),
   paste0("Q", 1:4)
 )
+inside_quartile_labels <- format_quartile_labels(quartile_breaks_inside)
+outside_quartile_labels <- format_quartile_labels(quartile_breaks_outside)
+quartile_break_order <- paste0("Q", 4:1)
 
 # --- Earth outline
 lon <- seq(-180, 180, by = 0.5)
@@ -338,6 +370,8 @@ if (identical(scale_style, "quartile_bins")) {
     ggplot2::scale_fill_manual(
       name = "Species at threat\n(inside)",
       values = inside_quartile_colors,
+      breaks = quartile_break_order,
+      labels = inside_quartile_labels[quartile_break_order],
       drop = FALSE,
       na.value = NA,
       guide = ggplot2::guide_legend(order = 1)
@@ -351,6 +385,8 @@ if (identical(scale_style, "quartile_bins")) {
     ggplot2::scale_fill_manual(
       name = "Species at threat\n(outside)",
       values = outside_quartile_colors,
+      breaks = quartile_break_order,
+      labels = outside_quartile_labels[quartile_break_order],
       drop = FALSE,
       na.value = NA,
       guide = ggplot2::guide_legend(order = 2)
