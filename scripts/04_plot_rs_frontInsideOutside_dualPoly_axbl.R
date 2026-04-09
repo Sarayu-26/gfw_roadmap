@@ -45,11 +45,11 @@ sf::sf_use_s2(FALSE)
 rs <- terra::rast("outputs/count_per_pixel_birdlife_plus_sdms.tif")
 
 front_poly_fsle <- readRDS(
-  "outputs/fsle_front_polygons/fsle_quartiles_1994_2022_Q3_pct_q75_minpatch70.rds"
+  "outputs/fsle_front_polygons/fsle_quartiles_1994_2022_Q3_pct_cut50.rds"
 )
 
 front_poly_thermal <- readRDS(
-  "outputs/thermal_front_polygons/thermal_front_persistence_q75_data_median39_minpatch70.rds"
+  "outputs/thermal_front_polygons/thermal_front_persistence_q75_data_median39.rds"
 )
 
 land <- get_world_latlon()
