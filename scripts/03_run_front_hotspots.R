@@ -59,10 +59,10 @@ make_front_polygon(
 
 make_front_polygon(
   rs_dir = "outputs/fsle_quartiles_global/fsle_quartiles_1994_2022_Q3_pct.tif",
-  cutoff = 0.9,
+  cutoff = 0.75,
   cutoff_type = "quantile",
   outdir = "outputs/fsle_front_polygons",
-  outfile = "fsle_quartiles_1994_2022_Q3_pct_q90_minpatch70",
+  outfile = "fsle_quartiles_1994_2022_Q3_pct_q75_minpatch70",
   remove_small_patches = TRUE,
   min_patch_cells = 70
 )
