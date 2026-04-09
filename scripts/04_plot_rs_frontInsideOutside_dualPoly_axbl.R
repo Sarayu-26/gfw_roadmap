@@ -69,9 +69,9 @@ simplify_preserve_topology <- TRUE
 
 # --- Output
 out_file <- if (isTRUE(simplify_front_polygons)) {
-  "outputs/figures/species_threat_fronts_AquaXBirdlife_insideOutside_dualPoly_v01a_simplified.png"
+  "/home/SB5/species_threat_fronts_AquaXBirdlife_insideOutside_dualPoly_v01a_simplified.png"
 } else {
-  "outputs/figures/species_threat_fronts_AquaXBirdlife_insideOutside_dualPoly_v01a.png"
+  "/home/SB5/species_threat_fronts_AquaXBirdlife_insideOutside_dualPoly_v01a.png"
 }
 
 # outside grey scale
