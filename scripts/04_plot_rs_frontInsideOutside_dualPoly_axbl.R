@@ -64,7 +64,7 @@ front_poly_linewidth <- 0.3
 
 # Optional polygon simplification for cleaner publication outlines
 simplify_front_polygons <- TRUE
-simplify_tolerance <- 0.8
+simplify_tolerance <- 0.5
 simplify_preserve_topology <- TRUE
 
 # Optional scale compression for publication figures
@@ -295,23 +295,19 @@ if (nrow(df_outside) > 0) {
   brks_outside <- brks_inside
 }
 
-quartile_breaks_inside <- compute_quartile_breaks(
-  df_inside$val,
-  quartile_min_value = quartile_min_value
-)
-quartile_breaks_outside <- compute_quartile_breaks(
-  df_outside$val,
+quartile_breaks_shared <- compute_quartile_breaks(
+  df$val,
   quartile_min_value = quartile_min_value
 )
 
 df_inside$val_quartile <- classify_quartiles(
   df_inside$val,
-  breaks = quartile_breaks_inside,
+  breaks = quartile_breaks_shared,
   quartile_min_value = quartile_min_value
 )
 df_outside$val_quartile <- classify_quartiles(
   df_outside$val,
-  breaks = quartile_breaks_outside,
+  breaks = quartile_breaks_shared,
   quartile_min_value = quartile_min_value
 )
 
@@ -323,8 +319,8 @@ outside_quartile_colors <- setNames(
   gray.colors(4, start = 0.92, end = 0.35),
   paste0("Q", 1:4)
 )
-inside_quartile_labels <- format_quartile_labels(quartile_breaks_inside)
-outside_quartile_labels <- format_quartile_labels(quartile_breaks_outside)
+inside_quartile_labels <- format_quartile_labels(quartile_breaks_shared)
+outside_quartile_labels <- format_quartile_labels(quartile_breaks_shared)
 quartile_break_order <- paste0("Q", 4:1)
 
 # --- Earth outline
