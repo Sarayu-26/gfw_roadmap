@@ -54,9 +54,6 @@ front_poly_thermal <- readRDS(
 
 land <- get_world_latlon()
 
-# --- Output
-out_file <- "/home/SB5/species_threat_fronts_AquaXBirdlife_insideOutside_dualPoly_v01a.png"
-
 # --- User options
 species_palette <- "YlOrRd"
 species_direction <- 1
@@ -64,6 +61,18 @@ species_direction <- 1
 fsle_poly_color <- "firebrick3"
 thermal_poly_color <- "dodgerblue3"
 front_poly_linewidth <- 0.3
+
+# Optional polygon simplification for cleaner publication outlines
+simplify_front_polygons <- TRUE
+simplify_tolerance <- 0.05
+simplify_preserve_topology <- TRUE
+
+# --- Output
+out_file <- if (isTRUE(simplify_front_polygons)) {
+  "outputs/figures/species_threat_fronts_AquaXBirdlife_insideOutside_dualPoly_v01a_simplified.png"
+} else {
+  "outputs/figures/species_threat_fronts_AquaXBirdlife_insideOutside_dualPoly_v01a.png"
+}
 
 # outside grey scale
 outside_low <- "grey92"
@@ -102,9 +111,40 @@ clean_wrap_poly <- function(x) {
   sf::st_make_valid(x)
 }
 
+simplify_front_poly <- function(x,
+                                do_simplify = FALSE,
+                                d_tolerance = 0.05,
+                                preserve_topology = TRUE) {
+  if (!isTRUE(do_simplify)) {
+    return(x)
+  }
+
+  x <- sf::st_simplify(
+    x,
+    dTolerance = d_tolerance,
+    preserveTopology = preserve_topology
+  )
+
+  sf::st_make_valid(x)
+}
+
 # --- Clean and wrap polygons separately for plotting
 front_poly_fsle_plot <- clean_wrap_poly(front_poly_fsle)
 front_poly_thermal_plot <- clean_wrap_poly(front_poly_thermal)
+
+front_poly_fsle_plot <- simplify_front_poly(
+  front_poly_fsle_plot,
+  do_simplify = simplify_front_polygons,
+  d_tolerance = simplify_tolerance,
+  preserve_topology = simplify_preserve_topology
+)
+
+front_poly_thermal_plot <- simplify_front_poly(
+  front_poly_thermal_plot,
+  do_simplify = simplify_front_polygons,
+  d_tolerance = simplify_tolerance,
+  preserve_topology = simplify_preserve_topology
+)
 
 # --- Convert species pixels to sf points and classify inside/outside
 pts <- sf::st_as_sf(df, coords = c("x", "y"), crs = 4326, remove = FALSE)
