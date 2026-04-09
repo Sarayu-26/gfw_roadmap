@@ -1,17 +1,41 @@
 # ==============================================================================
-#  Area statistics: inside vs outside front polygons
+#  This code was created by Isaac Brito-Morales
+#  (ibrito@conservation.org)
+# ==============================================================================
+
+# ==============================================================================
+# Area statistics: inside vs outside front polygons, globally and by latitude band
 #
-#  Purpose:
+# Purpose:
 #   - Compute total area inside (FSLE OR thermal)
-#   - Compute area with data (val >= 1) inside
+#   - Compute area with species present (rs >= 1) inside
 #   - Compute total area outside
-#   - Compute area with data outside
-#   - Derive proportions
+#   - Compute area with species present outside
+#   - Derive unweighted proportions
+#   - Compute richness-weighted area inside and outside
+#   - Repeat all metrics globally and by latitude band
 #
-#  Notes:
-#   - Uses raster grid (no polygon union)
-#   - "inside" = FSLE OR thermal OR both
-#   - "with data" = rs >= 1
+# Expected input:
+#   outputs/count_per_pixel_birdlife_plus_sdms.tif
+#   outputs/fsle_front_polygons/fsle_quartiles_1994_2022_Q3_pct_cut50.rds
+#   outputs/thermal_front_polygons/thermal_front_persistence_q75_data_median39.rds
+#
+# Creates:
+#   (optional)
+#   outputs/area_stats_inside_outside_by_lat_band.csv
+#
+# Notes:
+# - Uses raster grid (no polygon union)
+# - "inside" = union of FSLE and thermal front polygons
+# - "with data" = rs >= 1 (presence of at least one species)
+# - Unweighted metrics represent occupied area
+# - Richness-weighted metrics use cell area * species count per cell
+# - Latitude bands include:
+#     global
+#     tropics, tropics_north, tropics_south
+#     temperate, temperate_north, temperate_south
+#     polar, polar_north, polar_south
+# - Cell area is computed in km2 using terra::cellSize
 # ==============================================================================
 
 # --- Setup
@@ -38,9 +62,7 @@ land <- get_world_latlon()
 land_v <- terra::vect(land)
 rs <- terra::mask(rs, land_v, inverse = TRUE)
 
-# --- Rasterize polygons to raster grid (1 = inside, NA = outside)
-
-# FSLE
+# --- Rasterize polygons to raster grid
 r_fsle <- terra::rasterize(
   terra::vect(front_poly_fsle),
   rs,
@@ -48,7 +70,6 @@ r_fsle <- terra::rasterize(
   background = NA
 )
 
-# Thermal
 r_thermal <- terra::rasterize(
   terra::vect(front_poly_thermal),
   rs,
@@ -56,83 +77,172 @@ r_thermal <- terra::rasterize(
   background = NA
 )
 
-# --- Inside = FSLE OR thermal (union without merging polygons)
+# --- Inside / outside masks
 inside_any <- (!is.na(r_fsle)) | (!is.na(r_thermal))
-
-# Convert logical to numeric mask (1 / NA)
 inside_any <- terra::ifel(inside_any, 1, NA)
 
-# --- Outside mask
 outside_any <- terra::ifel(is.na(inside_any), 1, NA)
 
-# --- Data mask (>= 1)
+# --- Species presence mask
 has_data <- terra::ifel(rs >= 1, 1, NA)
 
-# --- Cell area (km²)
+# --- Cell area (km2)
 cell_area <- terra::cellSize(rs, unit = "km")
 
-# --- Area calculations
+# --- Richness-weighted surface
+rich_weight_surface <- cell_area * rs
 
-# Inside total
-total_inside_area <- terra::global(
-  terra::mask(cell_area, inside_any),
-  "sum",
-  na.rm = TRUE
-)[1,1]
+# --- Latitude raster
+lat_r <- terra::init(rs, "y")
 
-# Inside with data
-inside_area_with_data <- terra::global(
-  terra::mask(cell_area, inside_any * has_data),
-  "sum",
-  na.rm = TRUE
-)[1,1]
+# ------------------------------------------------------------------------------
+# Latitude-band masks
+# ------------------------------------------------------------------------------
+band_masks <- list(
+  global = terra::ifel(!is.na(rs), 1, NA),
 
-# Outside total
-total_outside_area <- terra::global(
-  terra::mask(cell_area, outside_any),
-  "sum",
-  na.rm = TRUE
-)[1,1]
+  tropics = terra::ifel(lat_r >= -23.5 & lat_r <= 23.5, 1, NA),
+  tropics_north = terra::ifel(lat_r > 0 & lat_r <= 23.5, 1, NA),
+  tropics_south = terra::ifel(lat_r >= -23.5 & lat_r < 0, 1, NA),
 
-# Outside with data
-outside_area_with_data <- terra::global(
-  terra::mask(cell_area, outside_any * has_data),
-  "sum",
-  na.rm = TRUE
-)[1,1]
+  temperate = terra::ifel(abs(lat_r) > 23.5 & abs(lat_r) <= 60, 1, NA),
+  temperate_north = terra::ifel(lat_r > 23.5 & lat_r <= 60, 1, NA),
+  temperate_south = terra::ifel(lat_r >= -60 & lat_r < -23.5, 1, NA),
 
-# --- Proportions
-prop_inside  <- inside_area_with_data  / total_inside_area
-prop_outside <- outside_area_with_data / total_outside_area
-
-# --- Output
-res <- data.frame(
-  metric = c(
-    "total_inside_area_km2",
-    "inside_area_with_data_km2",
-    "total_outside_area_km2",
-    "outside_area_with_data_km2",
-    "prop_inside_with_data",
-    "prop_outside_with_data"
-  ),
-  value = c(
-    total_inside_area,
-    inside_area_with_data,
-    total_outside_area,
-    outside_area_with_data,
-    prop_inside,
-    prop_outside
-  )
+  polar = terra::ifel(abs(lat_r) > 60, 1, NA),
+  polar_north = terra::ifel(lat_r > 60, 1, NA),
+  polar_south = terra::ifel(lat_r < -60, 1, NA)
 )
 
+# ------------------------------------------------------------------------------
+# Helper to sum raster values after masking
+# ------------------------------------------------------------------------------
+sum_masked <- function(x, mask_r) {
+  out <- terra::global(
+    terra::mask(x, mask_r),
+    "sum",
+    na.rm = TRUE
+  )[1, 1]
+
+  if (is.na(out)) out <- 0
+  return(out)
+}
+
+# ------------------------------------------------------------------------------
+# Per-band statistics
+# ------------------------------------------------------------------------------
+calc_band_stats <- function(band_name, band_mask) {
+
+  inside_band <- terra::mask(inside_any, band_mask)
+  outside_band <- terra::mask(outside_any, band_mask)
+  has_data_band <- terra::mask(has_data, band_mask)
+
+  # --- Unweighted
+  total_inside_area <- sum_masked(cell_area, inside_band)
+
+  inside_area_with_data <- sum_masked(
+    cell_area,
+    inside_band * has_data_band
+  )
+
+  total_outside_area <- sum_masked(cell_area, outside_band)
+
+  outside_area_with_data <- sum_masked(
+    cell_area,
+    outside_band * has_data_band
+  )
+
+  prop_inside <- if (total_inside_area > 0) {
+    inside_area_with_data / total_inside_area
+  } else {
+    NA_real_
+  }
+
+  prop_outside <- if (total_outside_area > 0) {
+    outside_area_with_data / total_outside_area
+  } else {
+    NA_real_
+  }
+
+  # --- Richness-weighted
+  rich_inside <- sum_masked(rich_weight_surface, inside_band)
+  rich_outside <- sum_masked(rich_weight_surface, outside_band)
+
+  prop_inside_weighted <- if (total_inside_area > 0) {
+    rich_inside / total_inside_area
+  } else {
+    NA_real_
+  }
+
+  prop_outside_weighted <- if (total_outside_area > 0) {
+    rich_outside / total_outside_area
+  } else {
+    NA_real_
+  }
+
+  data.frame(
+    band = band_name,
+
+    total_inside_area_km2 = total_inside_area,
+    inside_area_with_data_km2 = inside_area_with_data,
+    prop_inside_with_data = prop_inside,
+
+    total_outside_area_km2 = total_outside_area,
+    outside_area_with_data_km2 = outside_area_with_data,
+    prop_outside_with_data = prop_outside,
+
+    inside_richness_weighted_area = rich_inside,
+    prop_inside_richness_weighted = prop_inside_weighted,
+
+    outside_richness_weighted_area = rich_outside,
+    prop_outside_richness_weighted = prop_outside_weighted,
+
+    stringsAsFactors = FALSE
+  )
+}
+
+# ------------------------------------------------------------------------------
+# Run all latitude bands
+# ------------------------------------------------------------------------------
+res <- do.call(rbind, lapply(
+  names(band_masks),
+  function(nm) calc_band_stats(nm, band_masks[[nm]])
+))
+
+# ------------------------------------------------------------------------------
+# Output
+# ------------------------------------------------------------------------------
 print(res)
 
 # Optional nice print
 cat("\n--- SUMMARY ---\n")
-cat("Total inside area (km2): ", round(total_inside_area, 2), "\n")
-cat("Inside area with data (km2): ", round(inside_area_with_data, 2), "\n")
-cat("Proportion inside with data: ", round(prop_inside, 3), "\n\n")
+for (i in seq_len(nrow(res))) {
+  cat("\nBand:", res$band[i], "\n")
 
-cat("Total outside area (km2): ", round(total_outside_area, 2), "\n")
-cat("Outside area with data (km2): ", round(outside_area_with_data, 2), "\n")
-cat("Proportion outside with data: ", round(prop_outside, 3), "\n")
+  cat("  Total inside area (km2): ",
+      round(res$total_inside_area_km2[i], 2), "\n", sep = "")
+  cat("  Inside area with data (km2): ",
+      round(res$inside_area_with_data_km2[i], 2), "\n", sep = "")
+  cat("  Proportion inside with data: ",
+      round(res$prop_inside_with_data[i], 3), "\n", sep = "")
+
+  cat("  Total outside area (km2): ",
+      round(res$total_outside_area_km2[i], 2), "\n", sep = "")
+  cat("  Outside area with data (km2): ",
+      round(res$outside_area_with_data_km2[i], 2), "\n", sep = "")
+  cat("  Proportion outside with data: ",
+      round(res$prop_outside_with_data[i], 3), "\n", sep = "")
+
+  cat("  Inside richness-weighted area: ",
+      round(res$inside_richness_weighted_area[i], 2), "\n", sep = "")
+  cat("  Proportion inside richness-weighted: ",
+      round(res$prop_inside_richness_weighted[i], 3), "\n", sep = "")
+
+  cat("  Outside richness-weighted area: ",
+      round(res$outside_richness_weighted_area[i], 2), "\n", sep = "")
+  cat("  Proportion outside richness-weighted: ",
+      round(res$prop_outside_richness_weighted[i], 3), "\n", sep = "")
+}
+
+# Optional write
+# write.csv(res, "outputs/area_stats_inside_outside_by_lat_band.csv", row.names = FALSE)
