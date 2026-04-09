@@ -47,9 +47,9 @@ make_front_polygon(
   cutoff = 0.75,
   cutoff_type = "quantile",
   outdir = "outputs/thermal_front_polygons",
-  outfile = "thermal_front_persistence_q75_data_median39",
+  outfile = "thermal_front_persistence_q75_data_median39_minpatch70",
   remove_small_patches = TRUE,
-  min_patch_cells = 20
+  min_patch_cells = 70
 )
 
 
@@ -62,7 +62,7 @@ make_front_polygon(
   cutoff = 0.9,
   cutoff_type = "quantile",
   outdir = "outputs/fsle_front_polygons",
-  outfile = "fsle_quartiles_1994_2022_Q3_pct_q90_minpatch20",
+  outfile = "fsle_quartiles_1994_2022_Q3_pct_q90_minpatch70",
   remove_small_patches = TRUE,
-  min_patch_cells = 20
+  min_patch_cells = 70
 )
