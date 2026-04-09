@@ -64,7 +64,7 @@ front_poly_linewidth <- 0.3
 
 # Optional polygon simplification for cleaner publication outlines
 simplify_front_polygons <- TRUE
-simplify_tolerance <- 0.05
+simplify_tolerance <- 0.2
 simplify_preserve_topology <- TRUE
 
 # Optional scale compression for publication figures
