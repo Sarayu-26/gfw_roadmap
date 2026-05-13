@@ -269,4 +269,4 @@ for (i in seq_len(nrow(res))) {
 }
 
 # Optional write
-# write.csv(res, "outputs/area_stats_inside_outside_by_lat_band.csv", row.names = FALSE)
+write.csv(res, "outputs/area_stats_inside_outside_by_lat_band.csv", row.names = FALSE)
