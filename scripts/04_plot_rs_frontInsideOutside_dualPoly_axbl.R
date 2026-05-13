@@ -312,11 +312,11 @@ df_outside$val_quartile <- classify_quartiles(
 )
 
 inside_quartile_colors <- setNames(
-  c("#fff7bc", "#fec44f", "#fe9929", "#e31a1c"),
+  c("#fff4a3", "#ffbe3b", "#ff7f32", "#d7191c"),
   paste0("Q", 1:4)
 )
 outside_quartile_colors <- setNames(
-  c("#eeeeee", "#d9d9d9", "#bdbdbd", "#969696"),
+  c("#f2f2f2", "#e3e3e3", "#cdcdcd", "#adadad"),
   paste0("Q", 1:4)
 )
 inside_quartile_labels <- format_quartile_labels(quartile_breaks_shared)
