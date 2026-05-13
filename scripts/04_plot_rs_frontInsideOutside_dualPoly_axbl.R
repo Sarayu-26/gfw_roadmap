@@ -137,6 +137,7 @@ front_poly_fsle_plot <- simplify_front_poly(
   d_tolerance = simplify_tolerance,
   preserve_topology = simplify_preserve_topology
 )
+front_poly_fsle_plot$front_type <- "Velocity"
 
 front_poly_thermal_plot <- simplify_front_poly(
   front_poly_thermal_plot,
@@ -144,6 +145,7 @@ front_poly_thermal_plot <- simplify_front_poly(
   d_tolerance = simplify_tolerance,
   preserve_topology = simplify_preserve_topology
 )
+front_poly_thermal_plot$front_type <- "Thermal"
 
 # --- Convert species pixels to sf points and classify inside/outside
 pts <- sf::st_as_sf(df, coords = c("x", "y"), crs = 4326, remove = FALSE)
@@ -430,7 +432,7 @@ p4 <- p4 +
   ggplot2::geom_sf(
     data = front_poly_fsle_plot,
     fill = NA,
-    color = fsle_poly_color,
+    ggplot2::aes(color = front_type),
     linewidth = front_poly_linewidth,
     inherit.aes = FALSE
   ) +
@@ -439,7 +441,7 @@ p4 <- p4 +
   ggplot2::geom_sf(
     data = front_poly_thermal_plot,
     fill = NA,
-    color = thermal_poly_color,
+    ggplot2::aes(color = front_type),
     linewidth = front_poly_linewidth,
     inherit.aes = FALSE
   ) +
@@ -465,6 +467,19 @@ p4 <- p4 +
     crs = robin,
     default_crs = sf::st_crs(4326),
     expand = FALSE
+  ) +
+
+  ggplot2::scale_color_manual(
+    name = "Front persistence",
+    values = c(
+      Thermal = thermal_poly_color,
+      Velocity = fsle_poly_color
+    ),
+    breaks = c("Thermal", "Velocity"),
+    guide = ggplot2::guide_legend(
+      order = 3,
+      override.aes = list(fill = NA, linewidth = 0.7)
+    )
   ) +
 
   theme_map
