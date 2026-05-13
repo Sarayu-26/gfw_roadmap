@@ -470,7 +470,7 @@ p4 <- p4 +
   ) +
 
   ggplot2::scale_color_manual(
-    name = "Front persistence",
+    name = "High front\npersistence",
     values = c(
       Thermal = thermal_poly_color,
       Velocity = fsle_poly_color
