@@ -212,6 +212,18 @@ if (isTRUE(mask_poles_for_display)) {
   )
 }
 
+coord_limits <- if (isTRUE(mask_poles_for_display)) {
+  list(
+    xlim = c(-180, 180),
+    ylim = c(display_lat_min, display_lat_max)
+  )
+} else {
+  list(
+    xlim = NULL,
+    ylim = NULL
+  )
+}
+
 # --- Helpers for scale limits and breaks
 compute_scale_max <- function(values,
                               mode = c("full", "quartile"),
@@ -519,6 +531,8 @@ p4 <- p4 +
   ggplot2::coord_sf(
     crs = robin,
     default_crs = sf::st_crs(4326),
+    xlim = coord_limits$xlim,
+    ylim = coord_limits$ylim,
     expand = FALSE
   ) +
 
