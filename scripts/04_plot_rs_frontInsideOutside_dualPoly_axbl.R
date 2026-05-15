@@ -73,6 +73,11 @@ scale_limit_mode <- "quartile"
 quartile_prob <- 0.75
 quartile_min_value <- 1
 
+# Optional display-only polar masking
+mask_poles_for_display <- TRUE
+display_lat_min <- -60
+display_lat_max <- 75
+
 # --- Output
 out_file <- if (isTRUE(simplify_front_polygons)) {
   "/home/SB5/species_threat_fronts_AquaXBirdlife_insideOutside_dualPoly_v01a_simplified.png"
@@ -127,6 +132,26 @@ simplify_front_poly <- function(x,
   sf::st_make_valid(x)
 }
 
+make_display_lat_band <- function(lat_min = -60, lat_max = 75) {
+  band_ring <- matrix(
+    c(
+      -180, lat_min,
+       180, lat_min,
+       180, lat_max,
+      -180, lat_max,
+      -180, lat_min
+    ),
+    ncol = 2,
+    byrow = TRUE
+  )
+
+  sf::st_sfc(
+    sf::st_polygon(list(band_ring)),
+    crs = 4326
+  ) |>
+    sf::st_as_sf()
+}
+
 # --- Clean and wrap polygons separately for plotting
 front_poly_fsle_plot <- clean_wrap_poly(front_poly_fsle)
 front_poly_thermal_plot <- clean_wrap_poly(front_poly_thermal)
@@ -158,6 +183,34 @@ df$zone <- ifelse(inside_idx, "inside", "outside")
 
 df_inside <- df[df$zone == "inside", , drop = FALSE]
 df_outside <- df[df$zone == "outside", , drop = FALSE]
+
+if (isTRUE(mask_poles_for_display)) {
+  df_inside <- df_inside[
+    df_inside$y >= display_lat_min & df_inside$y <= display_lat_max,
+    ,
+    drop = FALSE
+  ]
+  df_outside <- df_outside[
+    df_outside$y >= display_lat_min & df_outside$y <= display_lat_max,
+    ,
+    drop = FALSE
+  ]
+
+  display_lat_band <- make_display_lat_band(
+    lat_min = display_lat_min,
+    lat_max = display_lat_max
+  )
+
+  front_poly_fsle_plot <- suppressWarnings(
+    sf::st_intersection(front_poly_fsle_plot, display_lat_band)
+  )
+  front_poly_thermal_plot <- suppressWarnings(
+    sf::st_intersection(front_poly_thermal_plot, display_lat_band)
+  )
+  land <- suppressWarnings(
+    sf::st_intersection(land, display_lat_band)
+  )
+}
 
 # --- Helpers for scale limits and breaks
 compute_scale_max <- function(values,
